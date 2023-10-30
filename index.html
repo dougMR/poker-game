@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0" />
+        <title>Poker AI</title>
+        <style>
+            :root {
+                --card-unit: 2vmin;
+            }
+            html,
+            body,
+            .hand-holder,
+            .cards,
+            .card,
+            .card::after {
+                touch-action: manipulation;
+            }
+            #output {
+                padding: 1rem;
+                font-size: 1rem;
+                font-family: monospace;
+                color: #222222;
+                /* border-radius: 1rem; */
+                /* border: 1px solid #333333; */
+            }
+            .hand-holder {
+                padding: 1rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            .hand-holder .cards {
+                display: flex;
+                gap: var(--card-unit);
+            }
+            /* .hand-holder.hidden .card::before {
+                content: "";
+                position: absolute;
+                border-radius: 1rem;
+                top: calc( 0px - var(--border-size));
+                right: calc( 0px - var(--border-size));
+                bottom: calc( 0px - var(--border-size));
+                left: calc( 0px - var(--border-size));
+                
+                background-color: white;
+                background: linear-gradient(
+                    to right bottom,
+                    #eee,
+                    #fff 60%,
+                    #ddd
+                );
+                border: 2px solid #ddd;
+            } */
+            .card {
+                position: relative;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+
+                font-weight: bold;
+                font-size: calc(var(--card-unit) * 2);
+
+                width: calc(var(--card-unit) * 8);
+                height: calc(var(--card-unit) * 10);
+                box-sizing: border-box;
+                --border-size: calc(1px + 0.25vmin);
+                border: var(--border-size) solid #999;
+                border-radius: var(--card-unit);
+                padding: 1rem;
+                background: linear-gradient(
+                    to right bottom,
+                    #eee,
+                    #fff 60%,
+                    #ddd
+                );
+                box-shadow: -0.5rem 0.5rem 1rem -0.5rem #555;
+                user-select: none;
+            }
+            .card::after {
+                content: "";
+                position: absolute;
+                border-radius: var(--card-unit);
+                top: calc(0px - var(--border-size));
+                right: calc(0px - var(--border-size));
+                bottom: calc(0px - var(--border-size));
+                left: calc(0px - var(--border-size));
+
+                transition: opacity 0.25s ease;
+                background-color: white;
+                opacity: 0;
+            }
+            .card.dimmed::after {
+                /* background-color: rgba(255,255,255,0.5); */
+                opacity: 0.5;
+            }
+
+            .card .number {
+                font-size: 1.3em;
+                color: #333;
+            }
+            .card .suit.d,
+            .card .suit.h {
+                color: #ff0000;
+            }
+            .hand-holder.hidden .card .number,
+            .hand-holder.hidden .card .suit {
+                display: none;
+            }
+            .hand-holder.won .card {
+                border: calc(var(--border-size) * 2) solid limegreen;
+            }
+            #controls {
+                padding-top: 1rem;
+                text-align: center;
+            }
+            #controls button {
+                margin: 0.5rem;
+                font-size: calc(12px + var(--card-unit)*0.5)
+            }
+            #controls .betting {
+                color: green;
+                font-size: var(--card-unit);
+                font-size: calc(12px + var(--card-unit) * 2);
+            }
+            #controls .betting .bet {
+                font-weight: bold;
+                font-size: 1.3em;
+            }
+            #player-stack {
+                color: green;
+                font-size: calc(12px + var(--card-unit) * 2);
+                font-weight: bold;
+                padding-left: 1rem;
+                margin: 0;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <div id="output"></div>
+        <p id="player-stack">$100</p>
+        <div id="ai-hand-holder" class="hand-holder">
+            <h3>AI Hand</h3>
+            <div class="cards"></div>
+        </div>
+        <div id="player-hand-holder" class="hand-holder">
+            <h3>Player Hand</h3>
+            <div class="cards"></div>
+        </div>
+        <div id="controls">
+            <button class="trade">TRADE</button>
+            <button class="next-hand">NEXT HAND</button>
+            <div class="betting">
+                BET <button class="up">UP</button
+                ><button class="down">DOWN</button> $<span class="bet">0</span>
+            </div>
+            <button class="showdown">SHOWDOWN</button>
+        </div>
+        <script type="module" src="main.js"></script>
+    </body>
+</html>
