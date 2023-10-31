@@ -24,15 +24,48 @@
                 /* border-radius: 1rem; */
                 /* border: 1px solid #333333; */
             }
-            .hand-holder {
-                padding: 1rem;
+            #hands {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                align-items: center;
+                /* border: 1px solid red; */
+            }
+            .hand-holder {
+                /* padding: 1rem calc(var(--card-unit) * 4); */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items:center;
+            }
+            /* .hand-holder .top-info,
+            .hand-holder .cards {
+                width: 75%
+            } */
+            .hand-holder .top-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                width:  calc(var(--card-unit) * 42);
+                padding-bottom: calc(var(--card-unit) * 0.5);
+            }
+            .hand-holder .top-info h3.player-name,
+            .hand-holder .top-info p.hand-name {
+                margin-bottom: 0;
+            }
+
+
+            .hand-holder .top-info h3.player-name {
+                font-size: calc(12px + var(--card-unit));
+                color: cornflowerblue;
+            }
+            .hand-holder .top-info p.hand-name {
+                font-family: sans-serif;
+                font-size: calc(8px + var(--card-unit) * 0.5);
+                color: #6c6c6c;
             }
             .hand-holder .cards {
                 display: flex;
+                justify-content: space-between;
                 gap: var(--card-unit);
             }
             /* .hand-holder.hidden .card::before {
@@ -64,6 +97,7 @@
 
                 width: calc(var(--card-unit) * 8);
                 height: calc(var(--card-unit) * 10);
+                
                 box-sizing: border-box;
                 --border-size: calc(1px + 0.25vmin);
                 border: var(--border-size) solid #999;
@@ -93,7 +127,7 @@
             }
             .card.dimmed::after {
                 /* background-color: rgba(255,255,255,0.5); */
-                opacity: 0.5;
+                opacity: 0.75;
             }
 
             .card .number {
@@ -141,14 +175,15 @@
     <body>
         <div id="output"></div>
         <p id="player-stack">$100</p>
-        <div id="ai-hand-holder" class="hand-holder">
+        <div id="hands"></div>
+        <!-- <div id="ai-hand-holder" class="hand-holder">
             <h3>AI Hand</h3>
             <div class="cards"></div>
         </div>
         <div id="player-hand-holder" class="hand-holder">
             <h3>Player Hand</h3>
             <div class="cards"></div>
-        </div>
+        </div> -->
         <div id="controls">
             <button class="trade">TRADE</button>
             <button class="next-hand">NEXT HAND</button>
