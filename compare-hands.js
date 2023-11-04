@@ -18,8 +18,9 @@ const handRanks = [
 ];
 
 const getHandName = (hand) => {
-    console.log('getHandName()',hand)
-    return handRanks[getHandDetails(hand).rank];
+    console.log('getHandName()',hand.bestHand);
+    console.log('rank: ',getHandDetails(hand.bestHand).rank)
+    return handRanks[getHandDetails(hand.bestHand).rank];
 };
 
 const getHandValue = (hand) => {
@@ -27,12 +28,12 @@ const getHandValue = (hand) => {
 };
 
 function getHandDetails(handString) {
-    console.log('getHandDetails()',handString);
-    console.log(typeof handString);
+    // console.log('getHandDetails()',handString);
     const cards = handString.split(" ");
     const faces = cards
         .map((a) => String.fromCharCode([77 - cardRanks.indexOf(a[0])]))
         .sort();
+        // console.log('faces:',faces)
     const suits = cards.map((a) => a[1]).sort();
     const counts = faces.reduce(count, {});
     const duplicates = Object.values(counts).reduce(count, {});
@@ -76,12 +77,12 @@ function getHandDetails(handString) {
 }
 
 function compareHands(h1, h2) {
-    console.log('compareHands()',h1,h2)
+    // console.log('compareHands()',h1,'v',h2)
     // returns whether h1 beats h2
     let d1 = getHandDetails(h1);
     let d2 = getHandDetails(h2);
 
-    console.log("hand details: ", d1);
+    // console.log("hand details: ", d1);
     if (d1.rank === d2.rank) {
         if (d1.value < d2.value) {
             return "WIN";
