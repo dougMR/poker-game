@@ -13,13 +13,13 @@ import { betting } from "./betting.js";
 import "./dev-tools.js";
 import { view } from "./view.js";
 import "./client-only.js";
-import { game } from "./game.js";
+import { game, players, addPlayer, dealAll, dealCard } from "./game.js";
 
 const sayHello = () => {
     console.log("hello");
 };
 
-const players = [];
+
 const setClientPlayer = (name) => {
     return addPlayer(name, true);
 };
@@ -35,42 +35,7 @@ const getHandWithSuits = (hand) => {
     return hand;
 };
 
-const rebuildDeck = () => {
-    deck.length = 0;
-    deck.push(...buildDeck());
-};
 
-const buildDeck = () => {
-    const deck = [];
-    for (const s of cardSuits.split("")) {
-        for (const r of cardRanks.split("")) {
-            deck.push(r + s);
-        }
-    }
-    return deck;
-};
-
-const dealCommunity = (numCards) => {
-    console.log("dealCommunity", numCards);
-};
-
-const dealAll = (numCards, facing) => {
-    if (numCards > 0) {
-        // !! change this to deal in the order of seats, not players
-        for (const player of players) {
-            dealCard(numCards, player, facing);
-        }
-    }
-};
-const dealCard = (numCards, player, facing) => {
-    // console.log("dealCard():", player.name, numCards);
-    // for (const player of players) {
-    if (numCards > 0) {
-        player.hand.drawCard(numCards, facing);
-    }
-
-    // }
-};
 
 // const showdownPlayerVai = (hand1, hand2) => {
 //     //
@@ -157,26 +122,7 @@ nextHandButton.addEventListener("pointerdown", (event) => {
 */
 
 view.output("Hello World");
-const gameTypes = {
-    "7 Card Stud": {
-        phases: [
-            { type: "ante", amount: 5 },
-            { type: "deal", up: 0, down: 0, hole: 2, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "showdown" },
-        ],
-    },
-};
+
 
 // const str = "Hello";
 // const myAr = str.split(" ");
@@ -195,10 +141,6 @@ const autoStart = () => {
     game.startGame("7 Card Stud");
     // game.nextPhase();
 };
-
-const cardRanks = "23456789TJQKA";
-const cardSuits = "DCHS";
-const deck = [];
 
 const clientPlayer = setClientPlayer("player", true);
 clientPlayer.stack = 50;
