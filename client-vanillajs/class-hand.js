@@ -27,50 +27,17 @@ const drawCardsFromDeck = (numCards, deck) => {
         cards.push(drawCardFromDeck(deck,this));
         loops++;
     }
-    // const totalLoops = Math.min(numCards, deck.length);
-    // while (loops < totalLoops && deck.length > 0) {
-    //     const cardString = deck.splice(
-    //         Math.floor(Math.random() * deck.length),
-    //         1
-    //     );
-    //     hand += `${loops > 0 ? " " : ""}` + cardString;
-    //     loops++;
-    // }
-    // how many could we not get from deck?
-    // const numMissing =
-    //     hand === "" ? numCards : numCards - hand.split(" ").length;
-    // // Not Enough Cards in deck to Trade
-    // if (numMissing !== 0) {
-    //     console.log("totalLoops", totalLoops);
-    //     console.log(`hand:'${hand}'`);
-    //     console.log('hand.split(" ")', hand.split(" "));
-    //     console.log('hand.split(" ").length', hand.split(" ").length);
-    //     console.log("numCards", numCards);
-    //     console.log("numMissing: ", numMissing);
-    // }
-
-    // for (let i = 0; i < numMissing; i++) {
-    //     hand += `${i > 0 ? " " : ""}**`;
-    // }
-    // console.log("hand:", `[${hand}]`);
-    // console.log("deck.length:", deck.length);
-    // return hand;
     return cards;
 };
 
-const applyPlayerCardListeners = () => {
-    // Move this to Hand (?)
-};
-
 const getBestHand = (hand) => {
-    // console.log('getBestHand():',hand.handString);
-    // hand needs to be at least 5 cards
+    // gets bets 5 card hand
+    // doesn't work with fewer than 5 cards
     const hands = getCombinations(hand.handArray, 5);
     const firstHand = hands.splice(0, 1)[0];
     let bestHandString = firstHand.join(" ");
     for (const h of hands) {
         const handNext = h.join(" ");
-        // console.log('handNext v bestHandString',handNext,'v',bestHandString);
         if (compareHands(handNext, bestHandString) === "WIN") {
             bestHandString = handNext;
         }
@@ -80,26 +47,19 @@ const getBestHand = (hand) => {
 
 class Hand {
     constructor(player, deck) {
-        // this._handString = "";
-        // this._handDetails;
-
         this._player = player;
         this._element = view.buildHandDisplay(this._player.seat);
         this.player = player;
         this._cards = [];
-        // this._cardsToTrade = [];
-        this._maxCardsToTrade = 3; // later we'll set this based on game, or whether  player has an ace
+        // this._maxCardsToTrade = 3; // later we'll set this based on game, or whether  player has an ace
         this._deck = deck;
         //
         this.hideHand = () => {
-            // this._element.classList.add("hidden");
-            // console.log("this.handArray:", this.handArray);
             for (let c = 0; c < this._cards.length; c++) {
                 this.hideCard(c);
             }
         };
         this.showHand = () => {
-            // this._element.classList.remove("hidden");
             for (let c = 0; c < this._cards.length; c++) {
                 this.showCard(c);
             }
@@ -109,30 +69,19 @@ class Hand {
         };
         this.hideCard = (index) => {
             // target card element
-            // const cardEl = this._element.querySelector(
-            //     `.cards :nth-child(${index + 1} of .card)`
-            // );
-            // console.log("hideCard", cardEl);
-            // cardEl.classList.add("hidden");
             this._cards[index].hide();
         };
         this.showCard = (index) => {
             // target card element
-            // const cardEl = this._element.querySelector(
-            //     `.cards :nth-child(${index + 1} of .card)`
-            // );
-            // cardEl.classList.remove("hidden");
             this._cards[index].show();
         };
         this.showHandWon = () => {
-            // this._element.classList.add("won");
             this.hilightBestHand();
         };
         this.hideHandWon = () => {
             this._element.classList.remove("won");
         };
         this.refreshCardElements = () => {
-            // console.log('this.refreshCardElements():',this._cards);
             this.hideHandWon();
             //
             const cardsHolder = this._element.querySelector(".cards");
@@ -140,14 +89,12 @@ class Hand {
 
             let index = 0;
             for (const card of this._cards) {
-                // console.log('card:',card);
                 cardsHolder.append(card.element);
                 index++;
             }
         };
         //
         this.drawHand = (numCards, facing) => {
-            // console.log("drawHand()");
             this._cards = drawCardsFromDeck(numCards, this._deck);
             for (const card of this._cards) {
                 card.facing = facing;
@@ -155,15 +102,7 @@ class Hand {
             this.refreshCardElements();
         };
         this.drawCard = (numCards, facing) => {
-            // console.log('drawCard()')
-            // const space = `${this._handString.length === 0 ? "" : " "}`;
-            // const drawString = `${drawCardsFromDeck(
-            //     numCards,
-            //     this._deck,
-            //     facing
-            // )}`;
-            // const wholeString = space + drawString;
-            // this.handString += wholeString;
+            console.log('Hand.drawCard()')
             let loops = 0;
             while (loops < numCards) {
                 const newCard = drawCardFromDeck(this._deck, this);
@@ -175,18 +114,6 @@ class Hand {
         };
         this.tradeCards = () => {
             // get rid of cardsToTrade
-            // const handAr = this.handArray;
-            // start w/ highest number, so it doesn't affect the splice index
-            // this._cardsToTrade.sort().reverse();
-
-            // for (const index of this._cardsToTrade) {
-            //     // replace traded cards
-            //     const newCard = drawCardsFromDeck(1, this._deck);
-            //     handAr.splice(index, 1, newCard);
-            // }
-
-            // this._cardsToTrade.length = 0;
-            // this.handString = handAr.join(" ");
             for (const card of this._cards) {
                 if (card.markedToTrade) {
                     const cardIndex = this._cards.indexOf(card);
@@ -203,15 +130,6 @@ class Hand {
         };
         this.discardCards = () => {
             // get rid of cardsToTrade
-            // const handAr = this.handArray;
-            // // start w/ highest number, so it doesn't affect the splice index
-            // this._cardsToTrade.sort().reverse();
-            // for (const index of this._cardsToTrade) {
-            //     // remove card
-            //     handAr.splice(index, 1);
-            // }
-            // this._cardsToTrade.length = 0;
-            // this.handString = handAr.join(" ");
             for (const card of this._cards) {
                 if (card.markedToTrade) {
                     const cardIndex = this._cards.indexOf(card);
@@ -221,10 +139,8 @@ class Hand {
             this.refreshCardElements();
         };
         this.hilightBestHand = () => {
-            console.log('hilightBestHand()');
-
+            // console.log('hilightBestHand()');
             const bestCards = this.cards.filter(c => this.name.includes(c.name));
-            console.log('bestCards:',bestCards)
             for(const card of bestCards){
                 view.hilightCard(card);
             }
@@ -237,28 +153,8 @@ class Hand {
     }
     get handString() {
         // the complete string, all cards, not just 5 best
-        // console.log(
-        //     "get handString():",
-        //     this._cards.map((c) => c.name).join(" ")
-        // );
         return this._cards.map((c) => c.name).join(" ");
     }
-
-    // set handString(value) {
-    //     if (typeof value === "string") {
-    //         console.log("adding to handString: ", `[${value}]`);
-    //         console.log("value[0]:", value[0]);
-    //         // regex might be cleaner and more accurate test
-    //         if (cardRanks.includes(value[0]) && cardSuits.includes(value[1])) {
-    //             this._handString = value;
-    //             this._handDetails = getHandDetails(value);
-    //             this.refreshCardElements();
-    //             this._handName = handRanks[this._handDetails.rank];
-    //             this._element.querySelector(".hand-name").innerHTML =
-    //                 this._handName;
-    //         }
-    //     }
-    // }
 
     get cards() {
         return this._cards;
@@ -266,17 +162,10 @@ class Hand {
 
     get handArray() {
         return this.handString.split(" ");
-        // const ar = this._handString.split(" ");
-        // if (ar.length === 1 && ar[0] === "") {
-        //     return [];
-        // } else {
-        //     return this._handString.split(" ");
-        // }
     }
 
     get handDetails() {
         console.log("get handDetails():", this.name);
-        // getHandDetails(this.bestHand)
         return getHandDetails(this.bestHand);
     }
 
@@ -307,7 +196,6 @@ class Hand {
 
     get handName() {
         // name of hand eg. "two pair"
-        // console.log('get handName()',this.handDetails.rank);
         return getHandName(this);
     }
 

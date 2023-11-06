@@ -128,8 +128,10 @@
                 background: linear-gradient(
                     to right bottom,
                     #eee,
+                    #ddd 20%,
+                    #fff 40%,
                     #fff 60%,
-                    #ddd
+                    #ccc
                 );
                 --half-unit: calc(var(--card-unit) * 0.75);
                 box-shadow: calc(var(--half-unit) * -1) var(--half-unit)
@@ -152,7 +154,7 @@
                 background-color: white;
                 opacity: 0;
             }
-            .card.dimmed::after {
+            .card.selected::after {
                 /* background-color: rgba(255,255,255,0.5); */
                 opacity: 0.75;
             }
@@ -167,6 +169,10 @@
             }
             #bet-controls.hidden,
             .raise-controls.hidden,
+            button.raise.hidden,
+            button.trade.hidden,
+            button.check-call.hidden,
+            button.fold.hidden,
             .card.hidden .number,
             .card.hidden .suit,
             .hand-holder.hidden .card .number,
@@ -225,6 +231,11 @@
             #dev-controls {
                 border: 2px solid orange;
                 border-radius: 0.5rem;
+                padding: 0.25em;
+                background-color: #222222;
+            }
+            #dev-controls button {
+                margin: 0.25em;
             }
             /* #dev-controls :nth-child(2 of button) {
                 border: 3px solid salmon;
@@ -260,8 +271,8 @@
             .pot-area .pot-amount {
                 font-size: 3em;
                 color: darkgreen;
-                text-shadow:0 0.1em 0.4em rgb(124, 255, 163), -1px -1px 1px yellow;
-
+                text-shadow: 0 0.1em 0.4em rgb(124, 255, 163),
+                    -1px -1px 1px yellow;
             }
 
             .client-player {
@@ -288,24 +299,29 @@
                     ". pot ."
                     "footer footer  footer";
 
-                height: calc(100vh - 26px);
+                height: calc(100vh - 76px);
                 border: 2px solid pink;
                 background-color: var(--table-green);
             }
-            
+
             .seat {
                 padding: calc(var(--card-unit) * 2);
-                
+
                 /* background: radial-gradient(
                     closest-side,
                     rgba(6, 36, 8, 0.5) 0,
                     transparent 70%
                 ); */
             }
+            .seat.folded {
+                background: black;
+                /* filter: grayscale(80%); */
+            }
             .seat .stack {
                 text-align: center;
                 color: darkgreen;
-                text-shadow:0 0.1em 0.4em rgb(124, 255, 163), -1px -1px 1px yellow;
+                text-shadow: 0 0.1em 0.4em rgb(124, 255, 163),
+                    -1px -1px 1px yellow;
 
                 font-size: calc(10px + var(--card-unit) * 2);
                 font-weight: bold;
@@ -361,6 +377,7 @@
                         <br />
                         <button class="bet">BET</button>
                     </div>
+                    <button class="trade">DRAW</button>
                 </div>
                 <br />
                 <button class="next-bettor">NEXT BETTOR</button>
@@ -406,6 +423,7 @@
             <button class="discard">DISCARD CARDS</button>
             <button class="bet">BET</button>
             <button class="call">CALL</button>
+            <button class="fold">FOLD</button>
             <button class="showdown">SHOWDOWN</button>
             <button class="show-hand">SHOW HAND</button>
             <button class="hide-hand">HIDE HAND</button>
@@ -415,5 +433,6 @@
             <button class="next-phase">NEXT PHASE -></button>
         </div>
         <script type="module" src="main.js"></script>
+        <!-- <script type="module" src="test-page.js"></script> -->
     </body>
 </html>

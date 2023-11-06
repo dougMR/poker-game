@@ -33,7 +33,6 @@ function getHandDetails(handString) {
     const faces = cards
         .map((a) => String.fromCharCode([77 - cardRanks.indexOf(a[0])]))
         .sort();
-        // console.log('faces:',faces)
     const suits = cards.map((a) => a[1]).sort();
     const counts = faces.reduce(count, {});
     const duplicates = Object.values(counts).reduce(count, {});

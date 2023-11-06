@@ -2,7 +2,7 @@ import { dealAll, dealCard, clientPlayer, players } from "./main.js";
 import { betting } from "./betting.js";
 import { addPlayer } from "./main.js";
 import { game } from "./game.js";
-import { view } from "./view.js";
+import { view } from "./view.js"
 // ----------------------------------- dev tools ------------------------------------
 
 let handSelected = null;
@@ -16,17 +16,13 @@ tools.querySelector(".deal").addEventListener("pointerdown", (event) => {
     // Deal cards - how many?
     let currentPlayer = clientPlayer;
     let numCards = Number(prompt("How many?", "5"));
-    // console.log('numCards',numCards);
     dealAll(numCards);
 });
 tools.querySelector(".trade").addEventListener("pointerdown", (event) => {
     handSelected.tradeCards();
-
-    // clientPlayer.hand.displayHand();
 });
 tools.querySelector(".discard").addEventListener("pointerdown", (event) => {
     handSelected.discardCards();
-    // clientPlayer.hand.displayHand();
 });
 tools.querySelector(".show-hand").addEventListener("pointerdown", (event) => {
     handSelected?.showHand();
@@ -36,12 +32,13 @@ tools.querySelector(".hide-hand").addEventListener("pointerdown", (event) => {
 });
 tools.querySelector(".bet").addEventListener("pointerdown", (event) => {
     const amount = Number(prompt("How much?", "5"));
-    // betting.addToBet(amount);
-    // betting.currentBettor.stack -= amount;
     betting.bet(amount);
 });
 tools.querySelector(".call").addEventListener("pointerdown", (event) => {
     betting.call();
+});
+tools.querySelector(".fold").addEventListener("pointerdown", (event) => {
+    betting.fold();
 });
 tools.querySelector(".showdown").addEventListener("pointerdown", (event) => {
     game.showdown();
@@ -56,7 +53,6 @@ tools.querySelector(".num-players").addEventListener("pointerdown", (event) => {
     let numPlayers = Number(prompt("How many?", "5"));
     for (let i = 0; i < numPlayers - 1; i++) {
         const newPlayer = addPlayer("AI-" + i);
-        // console.log("newPlayer: ", newPlayer);
         newPlayer.stack = 50;
     }
 });
@@ -66,10 +62,6 @@ document
     .addEventListener("pointerdown", (event) => {
         betting.nextBettor();
     });
-// tools.querySelector(".auto-play").addEventListener("pointerdown", (event) => {
-//     startGame();
-
-// });
 
 const setHandsSelection = () => {
     for (const p of players) {

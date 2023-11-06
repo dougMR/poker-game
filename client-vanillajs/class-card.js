@@ -3,25 +3,21 @@ import { Hand } from "./class-hand.js";
 
 class Card {
     constructor(cardString, hand) {
-        // console.log('New Card():',cardString,hand);
+        console.log("new Card()");
         // facing: up, down, hole, community
         this._hand = hand;
-        // console.log('hand:',hand);
         this._player = hand.player;
         this._facing = "up";
-        view.setCardFacing(this, this._facing);
-        // console.log('cardString:',cardString);
         this._string = cardString;
         this._markedToTrade = false;
         this._element = view.buildCardEl(cardString, this);
-        // console.log('this._element:',this._element);
+        view.setCardFacing(this, this._facing);
         this.hide = () => {
             view.hide(this);
-            // this._element.classList.add("hidden");
         };
         this.show = () => {
             view.show(this);
-            // this._element.classList.remove("hidden");
+            view.setCardFacing(this,"up");
         };
     }
     get facing() {
@@ -57,14 +53,14 @@ class Card {
     get hand() {
         return this._hand;
     }
-    set hand (value) {
+    set hand(value) {
         // maybe players can trade cards?
-        if(value instanceof Hand){
+        if (value instanceof Hand) {
             this._hand = hand;
             this._player = hand.player;
         }
     }
-    get player () {
+    get player() {
         return this._player;
     }
 }

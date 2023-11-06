@@ -1,11 +1,13 @@
 import { Player } from "./class-player.js";
-import { assignClientSeat,assignNextSeat } from "./seats.js";
+import { assignClientSeat, assignNextSeat } from "./seats.js";
 import { Hand } from "./class-hand.js";
 import { view } from "./view.js";
+import { betting } from "./betting.js";
+import { compareHands } from "./compare-hands.js";
 
-// 
+//
 // PLAYERS
-// 
+//
 const players = [];
 
 const addPlayer = (name, isClient) => {
@@ -15,7 +17,6 @@ const addPlayer = (name, isClient) => {
         )
     ) {
         const newPlayer = new Player(name);
-        // console.log('newPlayer:',newPlayer);
         if (isClient) {
             newPlayer.seat = assignClientSeat(newPlayer);
         } else {
@@ -28,14 +29,13 @@ const addPlayer = (name, isClient) => {
     return null;
 };
 
-
-// 
+//
 // GAME
-// 
-// let currentGame = null;
+//
 const game = {
     type: "",
     phaseIndex: 0,
+    currentPhase: null,
     dealer: players[0],
     nextDealer: function () {
         if (!this.dealer) {
@@ -48,12 +48,8 @@ const game = {
         console.log("nextDealer()", this.dealer.name);
         view.positionDealerButton();
     },
-    // seat order is only meaningful to the client
-    // to server, all players are same, there is no specific Client Player
-    nextPhase: function () {
-        console.log("nextPhase()");
-        this.phaseIndex++;
-        this.startPhase();
+    getPlayersInHand: function () {
+        return players.filter((p) => p.inHand);
     },
     startGame: function (gameType) {
         rebuildDeck();
@@ -64,11 +60,24 @@ const game = {
         this.type = gameType;
         this.startPhase();
     },
+    nextPhase: function () {
+        console.log("nextPhase()");
+        // setTimeout(() => {
+        this.phaseIndex++;
+        this.startPhase();
+        // }, 500);
+    },
     startPhase: function () {
         console.log("startPhase()");
-        const currentPhase = {
+        // if 1 or fewer players left, end game
+        if (this.getPlayersInHand().length <= 1) {
+            this.showdown();
+            return;
+        }
+        const currentPhase = (this.currentPhase = {
             ...gameTypes[game.type].phases[game.phaseIndex],
-        };
+        });
+        console.log("Phase: ", currentPhase.type);
         view.output(
             game.type + "<br/>Phase: " + currentPhase.type.toUpperCase()
         );
@@ -77,6 +86,8 @@ const game = {
         view.hideElement(bettingControls);
 
         if (currentPhase.type === "ante") {
+            // betting round where options are Call (ante amount) or Fold
+            betting.startAnte(currentPhase.amount);
         } else if (currentPhase.type === "deal") {
             dealAll(currentPhase.up, "up");
             dealAll(currentPhase.down, "down");
@@ -87,50 +98,64 @@ const game = {
             // step through each player in order, starting with left of the dealer
             betting.resetBet();
             betting.nextBettor();
+        } else if (currentPhase.type === "draw") {
+            // discard and draw from deck
+            betting.resetBet();
+            betting.nextBettor();
         } else if (currentPhase.type === "trade") {
+            // trade w another hand (other player, or even community)
         } else if (currentPhase.type === "discard") {
+            //
         } else if (currentPhase.type === "showdown") {
+            // find winner
             game.showdown();
         }
+    },
+    isDrawPhase: function () {
+        console.log("game.currentPhase:", game.currentPhase.type);
+        return ["draw", "trade", "discard"].includes(game.currentPhase.type);
     },
     showdown: function () {
         // showdown All Players
         console.log("showdown():");
-        let winningPlayer = players[0];
-        winningPlayer.hand.showHand();
-        winningPlayer.hand.showHandName();
-        for (const player of players.slice(1)) {
-            // console.log('winningPlayer:',winningPlayer.name)
-            // console.log('player:',player.name);
-            // console.log('winningHand:',winningPlayer.hand.bestHand);
-            // console.log('playerHand:',player.hand.bestHand);
-            const result = compareHands(
-                // player.hand.handString,
-                // winningPlayer.hand.handString
-                player.hand.bestHand,
-                winningPlayer.hand.bestHand
-            );
-            if (result === "WIN") {
-                winningPlayer = player;
+        let winningCircumstance = "";
+        let winningPlayer = this.getPlayersInHand()[0];
+        if (this.getPlayersInHand().length <= 1) {
+            // Hand should end before there's zero players, let's assume 1 left for now
+            winningCircumstance = " without opposition.";
+        } else {
+            // if there's more than 1 player, they must have cards...
+            winningPlayer.hand.showHand();
+            winningPlayer.hand.showHandName();
+            for (const player of this.getPlayersInHand().slice(1)) {
+                const result = compareHands(
+                    player.hand.bestHand,
+                    winningPlayer.hand.bestHand
+                );
+                if (result === "WIN") {
+                    winningPlayer = player;
+                }
+                player.hand.showHand();
+                player.hand.showHandName();
             }
-            player.hand.showHand();
-            player.hand.showHandName();
-        }
-        winningPlayer.hand.showHandWon();
-        const articleRanks = [1, 3, 4, 5, 8, 9];
-        const rank = winningPlayer.hand.handDetails.rank;
-        view.output(
-            winningPlayer.name +
-                " WINS with " +
+            winningPlayer.hand.showHandWon();
+            const rank = winningPlayer.hand.handDetails.rank;
+            const articleRanks = [1, 3, 4, 5, 8, 9];
+            winningCircumstance =
+                " with " +
                 (articleRanks.includes(rank) ? "a " : "") +
-                winningPlayer.hand.handName
-        );
+                winningPlayer.hand.handName;
+        }
+
+        view.output(`${winningPlayer.name} WINS${winningCircumstance}`);
+        // Award winner.  Handle tie/s
+        betting.payPot(winningPlayer);
     },
 };
 
-// 
+//
 // DECK
-// 
+//
 
 const deck = [];
 const cardRanks = "23456789TJQKA";
@@ -154,6 +179,17 @@ const gameTypes = {
             { type: "showdown" },
         ],
     },
+    "5 Card Draw": {
+        phases: [
+            { type: "ante", amount: 5 },
+            { type: "deal", up: 0, down: 0, hole: 5, community: 0 },
+            { type: "bet" },
+            { type: "draw", tradeLimit: 3 },
+            { type: "bet" },
+            { type: "showdown" },
+        ],
+        wildCards: ['2*', 'KH']
+    },
 };
 
 const buildDeck = () => {
@@ -165,7 +201,6 @@ const buildDeck = () => {
     }
     return deck;
 };
-
 
 const rebuildDeck = () => {
     deck.length = 0;
@@ -179,19 +214,16 @@ const dealCommunity = (numCards) => {
 const dealAll = (numCards, facing) => {
     if (numCards > 0) {
         // !! change this to deal in the order of seats, not players
-        for (const player of players) {
+        for (const player of game.getPlayersInHand()) {
             dealCard(numCards, player, facing);
         }
     }
 };
 const dealCard = (numCards, player, facing) => {
     // console.log("dealCard():", player.name, numCards);
-    // for (const player of players) {
     if (numCards > 0) {
         player.hand.drawCard(numCards, facing);
     }
-
-    // }
 };
 
-export { game, addPlayer, players, dealAll,dealCard };
+export { game, addPlayer, players, dealAll, dealCard };

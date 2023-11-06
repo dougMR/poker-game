@@ -1,6 +1,7 @@
 import { clientPlayer } from "./main.js";
 import { betting } from "./betting.js";
 import { view } from "./view.js";
+import { game } from "./game.js";
 
 // This and dev-tools.js and view.js are all client-side code
 
@@ -10,9 +11,9 @@ const betSpan = betControls.querySelector(".raise-controls .bet-amount");
 const checkCallButton = betControls.querySelector(".check-call");
 const raiseButton = betControls.querySelector(".raise");
 const raiseControls = betControls.querySelector(".raise-controls");
-// betSpan.style.border = "2px solid red";
 // clientPlayer.hand.element
 const foldButton = betControls.querySelector(".fold");
+const tradeButton = betControls.querySelector(".trade");
 
 betButton.addEventListener("pointerdown", (event) => {
     // Submit Bet
@@ -25,7 +26,6 @@ const addToBet = (amount) => {
     const total = currentBet + amount;
     if (clientPlayer.stack >= total && total >= 0) {
         view.setBet(currentBet + amount);
-        // clientPlayer.addToStack(-amount);
     }
 };
 
@@ -61,20 +61,23 @@ raiseButton.addEventListener("pointerdown", (event) => {
     // are we in bettnig phase?
     // Set the bet
     view.showElement(raiseControls);
+    // set starting amount
+    addToBet(betting.currentBet - clientPlayer.amountBetThisRound);
 });
 
 foldButton.addEventListener("pointerdown", (event) => {
     // Fold
-    betting.fold(clientPlayer);
+    betting.fold();
 });
 
-// tradeButton.addEventListener("pointerdown", (event) => {
-//     player.hand.tradeCards();
-//     player.hand.displayHand();
-//     // show appropriate controls
-//     tradeButton.style.display = "none";
-//     betControls.style.display = "block";
-//     showdownButton.style.display = "inline";
-//     nextHandButton.style.display = "none";
-//     output("Place your bet, then Press SHOWDOWN button to see the winner.");
-// });
+tradeButton.addEventListener("pointerdown", (event) => {
+    switch (game.currentPhase.type) {
+        case "draw":
+            clientPlayer.hand.tradeCards();
+            game.nextPhase();
+            break;
+        case "discard":
+            clientPlayer.hand.discard();
+            break;
+    }
+});

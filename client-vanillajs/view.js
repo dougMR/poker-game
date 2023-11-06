@@ -1,6 +1,6 @@
 import { betting } from "./betting.js";
 import { Card } from "./class-card.js";
-import { clientPlayer,  players } from "./main.js";
+import { clientPlayer, players } from "./main.js";
 import { game } from "./game.js";
 
 // This lives on the Client side
@@ -12,12 +12,12 @@ const raiseButton = betControls.querySelector(".raise");
 const raiseControls = betControls.querySelector(".raise-controls");
 
 const foldButton = betControls.querySelector(".fold");
+const betButton = betControls.querySelector(".bet");
 const potElement = document.querySelector(".pot-area .num");
 const betSpan = betControls.querySelector(".raise-controls .bet-amount");
+const tradeButton = betControls.querySelector(".trade");
 
 const dealerButtonElement = document.getElementById("dealer-button");
-
-
 
 const getSuitSymbol = (suitLetter) => {
     let symbol = "";
@@ -58,16 +58,16 @@ const view = {
             "none";
     },
     unhilightAllPlayers: function () {
-        for(const player of players){
+        for (const player of players) {
             this.unhilightPlayer(player);
         }
     },
-    hilightCard: function (card){
+    hilightCard: function (card) {
         // console.log('hilightCard():',card);
-        card.element.classList.add('hilight');
+        card.element.classList.add("hilight");
     },
-    unhilightCard: function(card){
-        card.element.classList.remove('hilight');
+    unhilightCard: function (card) {
+        card.element.classList.remove("hilight");
     },
     hideBetControls: function () {
         this.hideElement(betControls);
@@ -79,12 +79,31 @@ const view = {
         this.setBetControls();
     },
     setBetControls: function (player) {
-        console.log("setBetControls() current bet:",betting.currentBet)
-        checkCallButton.innerHTML = betting.currentBet > 0 ? "CALL" : "CHECK";
-        raiseButton.innerHTML = betting.currentBet > 0 ? "RAISE" : "BET";
+        console.log("setBetControls() current bet:", betting.currentBet);
+        console.log("game.isDrawPhase():", game.isDrawPhase());
+        if (game.isDrawPhase()) {
+            // show trade button
+            this.showElement(tradeButton);
+            this.hideElement(checkCallButton);
+            this.hideElement(raiseButton);
+            this.hideElement(foldButton);
+        } else {
+            this.hideElement(tradeButton);
+            this.showElement(checkCallButton);
+            this.showElement(foldButton);
+            checkCallButton.innerHTML =
+                betting.currentBet > 0 ? "CALL" : "CHECK";
+            if (betting.inAnteRound) {
+                this.hideElement(raiseButton);
+            } else {
+                this.showElement(raiseButton);
+                raiseButton.innerHTML =
+                    betting.currentBet > 0 ? "RAISE" : "BET";
+            }
+        }
     },
     buildCardEl: function (cardString, card) {
-        // console.log('buildCardEl')
+        console.log('buildCardEl():',cardString)
         const cardEl = document.createElement("div");
         cardEl.classList.add("card");
         const suit = cardString[1];
@@ -99,8 +118,17 @@ const view = {
         )}</span>`;
         // return cardEl;
         cardEl.addEventListener("pointerdown", (event) => {
-            card._markedToTrade = !card._markedToTrade;
-            event.currentTarget.classList.toggle("dimmed");
+            if (game.isDrawPhase()) {
+                if (
+                    card.markedToTrade ||
+                    (!card.markedToTrade &&
+                        card.hand.cards.filter((c) => c._markedToTrade).length <
+                            game.currentPhase.tradeLimit)
+                ) {
+                    card.markedToTrade = !card.markedToTrade;
+                    event.currentTarget.classList.toggle("selected");
+                }
+            }
         });
         return cardEl;
     },
@@ -123,16 +151,20 @@ const view = {
         containerEl.innerHTML = `<div class="hand-holder"><div class="top-info"><h3 class="player-name"></h3><p class="hand-name"></p></div><div class="cards"></div><div class="stack">$100</div></div>`;
         return containerEl.querySelector(".hand-holder");
     },
-    foldHand: function ( hand){
-        for(const card of hand.cards){
-            if(!card.facing==="down"){
-                setCardFacing(card,"hole");
+    foldHand: function (player) {
+        // console.log('view:foldHand()');
+        const hand = player.hand;
+        // console.log('cards:',hand.cards);
+        for (const card of hand.cards) {
+            if (!card.facing === "down") {
+                setCardFacing(card, "hole");
             }
         }
-        hand.element.classList.add('folded');
+        hand.element.classList.add("folded");
+        player.seat.element.classList.add("folded");
     },
-    showHandName: function(hand){
-        hand.element.querySelector('.hand-name').innerHTML = hand.handName;
+    showHandName: function (hand) {
+        hand.element.querySelector(".hand-name").innerHTML = hand.handName;
     },
     setStack: function (player, amount) {
         console.log("view.setStack()", player.name, amount);
@@ -152,9 +184,14 @@ const view = {
         betSpan.innerHTML = amount;
     },
     setCardFacing: function (card, facing) {
+        console.log('setCardFaceing():',facing);
+        console.log('card:',card);
         // default show card to everyone?
         if (facing === "up") {
             // show card to everyone
+            this.show(card);
+            card.element.classList.remove("hole");
+            card.element.classList.remove("down");
         } else if (facing === "down") {
             // hide from group, and client
             this.hide(card);
@@ -172,11 +209,11 @@ const view = {
     },
     positionDealerButton: function () {
         const dealerSeatEl = game.dealer.seat.element;
-        const x = dealerSeatEl.offsetLeft + dealerSeatEl.offsetWidth;
-        const y = dealerSeatEl.offsetTop + dealerSeatEl.offsetHeight * 0.5;
+        const x = dealerSeatEl.offsetLeft + 30; //dealerSeatEl.offsetWidth;
+        const y = dealerSeatEl.offsetTop + 30; //dealerSeatEl.offsetHeight * 0.5;
         dealerButtonElement.style.left = x + "px";
         dealerButtonElement.style.top = y + "px";
-        console.log("postionDealerButton()", x, y);
+        console.log("view:postionDealerButton()", x, y);
     },
 };
 

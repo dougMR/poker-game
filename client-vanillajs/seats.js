@@ -23,16 +23,19 @@ for (const el of seatElements) {
     };
     index++;
 }
-const getNextOccupiedSeat = (seatIndex) => {
-    // console.log('seatIndex:',seatIndex);
-    seatIndex = (seatIndex + 1) % seats.length;
-    // console.log('seatIndex:',seatIndex);
-    while (seats[seatIndex].player === null) {
+const getNextOccupiedSeat = (startIndex) => {
+    let nextSeatIndex = (startIndex + 1) % seats.length;
+    while (seats[nextSeatIndex].player === null) {
         // unoccupied, find another
-        seatIndex = (seatIndex + 1) % seats.length;
-        // console.log('seatIndex:',seatIndex);
+        nextSeatIndex = (nextSeatIndex + 1) % seats.length;
+        if(nextSeatIndex === startIndex){
+            // No occupied seat
+            console.error('seats: no Occupied Seat')
+            return null;
+        }
     }
-    return seats[seatIndex];
+    console.log('found Occupied seat: ',nextSeatIndex);
+    return seats[nextSeatIndex];
 };
 const getAvailableSeat = () => {
     // looking for empty opponent seat

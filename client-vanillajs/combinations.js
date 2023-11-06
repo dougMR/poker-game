@@ -16,19 +16,35 @@
 // }
 // console.log(combos);
 
+// recursive version by google search AI
+// function getCombinations(array, depth) {
 
+//     if (depth === 0) {
+//         return [[]];
+//     }
 
+//     const results = [];
+//     for (let i = 0; i < array.length; i++) {
+//         const rest = array.slice(i + 1);
+//         const newCombinations = getCombinations(rest, depth - 1);
+//         for (let j = 0; j < newCombinations.length; j++) {
+//             // results.push([array[i]].concat(newCombinations[j]));
+//             results.push([array[i], ...newCombinations[j]]);
+//         }
+//     }
+//     return results;
+// }
 
 // recursive version by google search AI
-function getCombinations(array, depth) {
-    
+function getCombinations(array, depth, allowDuplicates) {
+    // console.log('getCombinations():',array.length,depth,allowDuplicates);
     if (depth === 0) {
         return [[]];
     }
 
     const results = [];
     for (let i = 0; i < array.length; i++) {
-        const rest = array.slice(i + 1);
+        const rest = allowDuplicates ? array : array.slice(i + 1);
         const newCombinations = getCombinations(rest, depth - 1);
         for (let j = 0; j < newCombinations.length; j++) {
             // results.push([array[i]].concat(newCombinations[j]));
@@ -37,7 +53,5 @@ function getCombinations(array, depth) {
     }
     return results;
 }
-
-// console.log(getCombinations(ar, comboLength));
 
 export { getCombinations };
