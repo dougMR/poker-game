@@ -3,7 +3,7 @@ import { assignClientSeat, assignNextSeat } from "./seats.js";
 import { Hand } from "./class-hand.js";
 import { view } from "./view.js";
 import { betting } from "./betting.js";
-import { compareHands } from "./compare-hands.js";
+import { compareHands } from "./compare-hands-bitwise.js";
 
 //
 // PLAYERS
@@ -59,6 +59,26 @@ const game = {
         }
         this.type = gameType;
         this.startPhase();
+    },
+    checkWild: function (card) {
+        // console.log("gameType:", this.type);
+        // console.log("gameTypes[this.type]:", gameTypes[this.type]);
+        const wildCards = gameTypes[this.type].wildCards;
+        for (const wc of wildCards) {
+            if (wc[0] === card.string[0]) {
+                // face (number) matches
+                if (wc[1] === "*") {
+                    // any suit
+                    return true;
+                } else {
+                    // specific suit
+                    if (wc[1] === card.string[1]) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     },
     nextPhase: function () {
         console.log("nextPhase()");
@@ -132,7 +152,7 @@ const game = {
                     player.hand.bestHand,
                     winningPlayer.hand.bestHand
                 );
-                if (result === "WIN") {
+                if (result === 1) {
                     winningPlayer = player;
                 }
                 player.hand.showHand();
@@ -150,45 +170,6 @@ const game = {
         view.output(`${winningPlayer.name} WINS${winningCircumstance}`);
         // Award winner.  Handle tie/s
         betting.payPot(winningPlayer);
-    },
-};
-
-//
-// DECK
-//
-
-const deck = [];
-const cardRanks = "23456789TJQKA";
-const cardSuits = "DCHS";
-const gameTypes = {
-    "7 Card Stud": {
-        phases: [
-            { type: "ante", amount: 5 },
-            { type: "deal", up: 0, down: 0, hole: 2, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
-            { type: "bet" },
-            { type: "showdown" },
-        ],
-    },
-    "5 Card Draw": {
-        phases: [
-            { type: "ante", amount: 5 },
-            { type: "deal", up: 0, down: 0, hole: 5, community: 0 },
-            { type: "bet" },
-            { type: "draw", tradeLimit: 3 },
-            { type: "bet" },
-            { type: "showdown" },
-        ],
-        wildCards: ['2*', 'KH']
     },
 };
 
@@ -226,4 +207,44 @@ const dealCard = (numCards, player, facing) => {
     }
 };
 
-export { game, addPlayer, players, dealAll, dealCard };
+//
+// DECK
+//
+
+const deck = [];
+const cardRanks = "23456789TJQKA";
+const cardSuits = "DCHS";
+const fullDeck = buildDeck();
+const gameTypes = {
+    "7 Card Stud": {
+        phases: [
+            { type: "ante", amount: 5 },
+            { type: "deal", up: 0, down: 0, hole: 2, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "showdown" },
+        ],
+    },
+    "5 Card Draw": {
+        phases: [
+            // { type: "ante", amount: 5 },
+            { type: "deal", up: 0, down: 0, hole: 5, community: 0 },
+            { type: "bet" },
+            { type: "draw", tradeLimit: 3 },
+            { type: "bet" },
+            { type: "showdown" },
+        ],
+        wildCards: ["2*", "KH","3*","4*","5*","6*","T*"],
+    },
+};
+
+export { game, addPlayer, players, dealAll, dealCard, buildDeck };

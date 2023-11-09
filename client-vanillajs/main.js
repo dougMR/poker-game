@@ -1,4 +1,4 @@
-import { compareHands, getHandName } from "./compare-hands.js";
+import { compareHands } from "./compare-hands-bitwise.js";
 import { getCombinations } from "./combinations.js";
 import { Player } from "./class-player.js";
 import { Hand } from "./class-hand.js";
@@ -32,10 +32,10 @@ const getHandWithSuits = (hand) => {
     return hand;
 };
 
-view.output("Hello World");
+// view.output("Hello World");
 
 const autoStart = () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 1; i++) {
         const newPlayer = addPlayer("AI-" + i);
         newPlayer.stack = 50;
     }

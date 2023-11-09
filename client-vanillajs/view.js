@@ -102,8 +102,9 @@ const view = {
             }
         }
     },
-    buildCardEl: function (cardString, card) {
-        console.log('buildCardEl():',cardString)
+    buildCardEl: function (card) {
+        // console.log('buildCardEl():',card.string)
+        const cardString = card.string;
         const cardEl = document.createElement("div");
         cardEl.classList.add("card");
         const suit = cardString[1];
@@ -131,6 +132,15 @@ const view = {
             }
         });
         return cardEl;
+    },
+    showWild:function(card){
+        // console.log('showWild():',card.isWild);
+        if(card.isWild){
+            card.element.classList.add('wild');
+        } else {
+            card.element.classList.remove('wild');
+        }
+        
     },
     hide: function (instance) {
         // console.log("hide() instance.element:", instance.element);
@@ -167,7 +177,7 @@ const view = {
         hand.element.querySelector(".hand-name").innerHTML = hand.handName;
     },
     setStack: function (player, amount) {
-        console.log("view.setStack()", player.name, amount);
+        // console.log("view.setStack()", player.name, amount);
         player.hand.element.querySelector(".stack").innerHTML = `$${amount}`;
     },
     output: function (msg, add) {
@@ -184,8 +194,8 @@ const view = {
         betSpan.innerHTML = amount;
     },
     setCardFacing: function (card, facing) {
-        console.log('setCardFaceing():',facing);
-        console.log('card:',card);
+        // console.log('setCardFaceing():',facing);
+        // console.log('card:',card);
         // default show card to everyone?
         if (facing === "up") {
             // show card to everyone

@@ -3,14 +3,15 @@ import { Hand } from "./class-hand.js";
 
 class Card {
     constructor(cardString, hand) {
-        console.log("new Card()");
+        // console.log("new Card()");
         // facing: up, down, hole, community
         this._hand = hand;
         this._player = hand.player;
         this._facing = "up";
         this._string = cardString;
+        this._isWild = false;
         this._markedToTrade = false;
-        this._element = view.buildCardEl(cardString, this);
+        this._element = view.buildCardEl(this);
         view.setCardFacing(this, this._facing);
         this.hide = () => {
             view.hide(this);
@@ -42,6 +43,15 @@ class Card {
     }
     get name() {
         return this._string;
+    }
+    get isWild(){
+        return this._isWild;
+    }
+    set isWild(value){
+        if(typeof value === "boolean"){
+            this._isWild = value;
+            view.showWild(this);
+        }
     }
 
     get element() {

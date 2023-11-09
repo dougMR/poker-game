@@ -154,6 +154,12 @@
                 background-color: white;
                 opacity: 0;
             }
+            .card.wild .number,
+            .card.wild .suit {
+                /* color: green; */
+                color: transparent;  
+                text-shadow: 0 0 0 green, 0 0 0.2em lime;
+            }
             .card.selected::after {
                 /* background-color: rgba(255,255,255,0.5); */
                 opacity: 0.75;
@@ -432,7 +438,7 @@
             <button class="start-game">START GAME</button>
             <button class="next-phase">NEXT PHASE -></button>
         </div>
-        <script type="module" src="main.js"></script>
-        <!-- <script type="module" src="test-page.js"></script> -->
+        <!-- <script type="module" src="main.js"></script> -->
+        <script type="module" src="test-page.js"></script>
     </body>
 </html>
