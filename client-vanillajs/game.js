@@ -3,7 +3,9 @@ import { assignClientSeat, assignNextSeat } from "./seats.js";
 import { Hand } from "./class-hand.js";
 import { view } from "./view.js";
 import { betting } from "./betting.js";
-import { compareHands } from "./compare-hands-bitwise.js";
+// import { compareHands } from "./compare-hands-bitwise.js";
+import { compareHands } from "./check-hands.js";
+import { getNextOccupiedSeat } from "./seats.js";
 
 //
 // PLAYERS
@@ -37,6 +39,9 @@ const game = {
     phaseIndex: 0,
     currentPhase: null,
     dealer: players[0],
+    getCurrentGame: function () {
+        return gameTypes[this.type];
+    },
     nextDealer: function () {
         if (!this.dealer) {
             this.dealer = players[0];
@@ -52,18 +57,23 @@ const game = {
         return players.filter((p) => p.inHand);
     },
     startGame: function (gameType) {
+        console.log("game.startGame()");
         rebuildDeck();
-        this.nextDealer();
         for (const p of players) {
             p.inHand = true;
+            p.hand.clearHand();
         }
+        this.nextDealer();
+
         this.type = gameType;
+        this.phaseIndex = 0;
         this.startPhase();
     },
     checkWild: function (card) {
         // console.log("gameType:", this.type);
         // console.log("gameTypes[this.type]:", gameTypes[this.type]);
-        const wildCards = gameTypes[this.type].wildCards;
+        const wildCards = this.getCurrentGame().wildCards;
+        if (!wildCards) return false;
         for (const wc of wildCards) {
             if (wc[0] === card.string[0]) {
                 // face (number) matches
@@ -82,9 +92,19 @@ const game = {
     },
     nextPhase: function () {
         console.log("nextPhase()");
+        console.log(
+            "gameTypes[game.type].phases.length:",
+            this.getCurrentGame().phases.length
+        );
         // setTimeout(() => {
         this.phaseIndex++;
-        this.startPhase();
+        console.log("this.phaseIndex:", this.phaseIndex);
+        if (this.phaseIndex >= this.getCurrentGame().phases.length) {
+            this.startGame(this.type);
+        } else {
+            this.startPhase();
+        }
+
         // }, 500);
     },
     startPhase: function () {
@@ -95,12 +115,24 @@ const game = {
             return;
         }
         const currentPhase = (this.currentPhase = {
-            ...gameTypes[game.type].phases[game.phaseIndex],
+            ...this.getCurrentGame().phases[game.phaseIndex],
         });
         console.log("Phase: ", currentPhase.type);
+        const wilds = this.getCurrentGame().wildCards;
         view.output(
-            game.type + "<br/>Phase: " + currentPhase.type.toUpperCase()
+            game.type + "<br />Phase: " + currentPhase.type.toUpperCase()
         );
+        if (wilds) {
+            let wildString = "Wilds: ";
+            for (const wName of wilds) {
+                if (wilds.indexOf(wName) !== 0) {
+                    wildString += ", ";
+                }
+                wildString += wName[1] === "*" ? wName[0] : wName;
+            }
+            view.output(wildString, true);
+        }
+
         // show / hide betting controls
         const bettingControls = document.getElementById("bet-controls");
         view.hideElement(bettingControls);
@@ -145,16 +177,16 @@ const game = {
             winningCircumstance = " without opposition.";
         } else {
             // if there's more than 1 player, they must have cards...
+            winningPlayer.hand.arrangeByBest();
             winningPlayer.hand.showHand();
             winningPlayer.hand.showHandName();
+
             for (const player of this.getPlayersInHand().slice(1)) {
-                const result = compareHands(
-                    player.hand.bestHand,
-                    winningPlayer.hand.bestHand
-                );
+                const result = compareHands(player.hand, winningPlayer.hand);
                 if (result === 1) {
                     winningPlayer = player;
                 }
+                player.hand.arrangeByBest();
                 player.hand.showHand();
                 player.hand.showHandName();
             }
@@ -164,10 +196,12 @@ const game = {
             winningCircumstance =
                 " with " +
                 (articleRanks.includes(rank) ? "a " : "") +
-                winningPlayer.hand.handName;
+                winningPlayer.hand.name;
         }
 
-        view.output(`${winningPlayer.name} WINS${winningCircumstance}`);
+        view.output(
+            `${winningPlayer.name} WINS <br />* * *<br />${winningCircumstance}`
+        );
         // Award winner.  Handle tie/s
         betting.payPot(winningPlayer);
     },
@@ -203,7 +237,20 @@ const dealAll = (numCards, facing) => {
 const dealCard = (numCards, player, facing) => {
     // console.log("dealCard():", player.name, numCards);
     if (numCards > 0) {
-        player.hand.drawCard(numCards, facing);
+        const cardDealt = player.hand.drawCard(numCards, facing);
+
+        // Is it a Draw Again card?
+        const drawAgainCards = game.getCurrentGame().drawAgain;
+        if (
+            (facing === "up" || facing === "community") &&
+            drawAgainCards &&
+            drawAgainCards.find((c) =>
+                c[1] === "*" ? c[0] == cardDealt.name[0] : c === cardDealt.name
+            )
+        ) {
+            // Draw Again
+            dealCard(1, player, facing);
+        }
     }
 };
 
@@ -236,14 +283,34 @@ const gameTypes = {
     },
     "5 Card Draw": {
         phases: [
-            // { type: "ante", amount: 5 },
+            { type: "ante", amount: 5 },
             { type: "deal", up: 0, down: 0, hole: 5, community: 0 },
             { type: "bet" },
             { type: "draw", tradeLimit: 3 },
             { type: "bet" },
             { type: "showdown" },
         ],
-        wildCards: ["2*", "KH","3*","4*","5*","6*","T*"],
+        wildCards: ["2*", "KH", "3*", "4*", "5*", "6*", "T*"],
+    },
+    Baseball: {
+        phases: [
+            { type: "ante", amount: 5 },
+            { type: "deal", up: 0, down: 0, hole: 2, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "deal", up: 1, down: 0, hole: 0, community: 0 },
+            { type: "bet" },
+            { type: "showdown" },
+        ],
+        wildCards: ["3*", "9*"],
+        drawAgain: ["4*"],
     },
 };
 

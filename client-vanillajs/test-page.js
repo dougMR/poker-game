@@ -1,12 +1,11 @@
-import { getCombinations } from "./combinations.js";
-import {
-    getBestHandWithWildcards,
-    findHandInHands,
-    removeRedundancies,
-    evaluateHand,
-} from "./compare-hands-bitwise.js";
+// import { getCombinations } from "./combinations.js";
+// import {
+//     getBestHandWithWildcards,
+//     findHandInHands,
+//     removeRedundancies,
+//     evaluateHand,
+// } from "./compare-hands-bitwise.js";
 import { getHandDetails } from "./check-hands.js";
-
 
 const buildDeck = () => {
     const deck = [];
@@ -397,7 +396,7 @@ console.log('dec % 15',dec%15);
 
 const theHand = [];
 for (let i = 0; i < 7; i++) {
-    if (Math.random() < 0.2) {
+    if (Math.random() < 0.15) {
         theHand.push("**");
     } else {
         const index = Math.floor(Math.random() * deck.length);
@@ -409,15 +408,18 @@ for (let i = 0; i < 7; i++) {
 // ['JD', 'JH', '9S', '4C', '9H', '**', '**', '**', '3C', 'QC']
 // ['8H', '**', '**', 'KD', '**', '9C', '3S', 'JD', '9S', '**']
 // console.log("HAND", ['JS', '4D', '8H', 'TC', '4S', '2D', 'AS', '3C', '**', '**']);
-console.log("best:", getHandDetails(['2S','AH', '3S', '**', '5S','6S']));
+// const myHand = ["7C", "8S", "**", "4S", "**", "TS", "**"];
+// console.log(
+//     "best:",
+//     getHandDetails(myHand).cards,
+//     handRanks[getHandDetails(myHand).rank]
+// );
+const handDetails = getHandDetails(theHand);
+console.log('best: ',handDetails.cards, handRanks[handDetails.rank]);
 
-
-
-// console.log('best: ',getHandDetails(theHand));
-
-// 
+//
 // REGEX HAND EVALUATIONS
-// 
+//
 /*
 Royal/straight flush: "(2345A|23456|34567|...|9TJQK|TJQKA)#(\\w)\\1{4}"
 Four of a kind:       ".*(\\w)\\1{3}.*#.*"

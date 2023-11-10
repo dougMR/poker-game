@@ -27,8 +27,10 @@
                 touch-action: manipulation;
             }
             #output {
-                padding: 1rem;
-                font-size: calc(16px + var(--card-unit));
+                padding: 1em;
+                /* font-size: calc(16px + var(--card-unit)); */
+                font-size: 1.2em;
+                line-height: 1.3em;
                 font-family: monospace;
                 color: #ddd;
                 text-shadow: 0 0 0.2em black;
@@ -45,7 +47,7 @@
                 /* padding: 1rem calc(var(--card-unit) * 4); */
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
+                /* justify-content: center; */
                 align-items: center;
             }
             /* .hand-holder .top-info,
@@ -57,7 +59,7 @@
                 justify-content: space-between;
                 align-items: flex-end;
                 width: calc(var(--card-unit) * 42);
-                padding-bottom: calc(var(--card-unit) * 0.5);
+                padding-bottom: calc(0.5em + var(--card-unit) * 0.5);
             }
             .hand-holder .top-info h3.player-name,
             .hand-holder .top-info p.hand-name {
@@ -77,7 +79,7 @@
             .hand-holder .cards {
                 display: flex;
                 flex-wrap: wrap;
-                justify-content: space-between;
+                /* justify-content: space-between; */
                 gap: var(--card-unit);
             }
             .client-player {
@@ -157,7 +159,7 @@
             .card.wild .number,
             .card.wild .suit {
                 /* color: green; */
-                color: transparent;  
+                color: transparent;
                 text-shadow: 0 0 0 green, 0 0 0.2em lime;
             }
             .card.selected::after {
@@ -271,7 +273,7 @@
                 align-items: center;
             }
             #card-table .pot-area {
-                border: 1px solid #045124;
+                border: 3px dotted #166336;
                 border-radius: 1em;
             }
             .pot-area .pot-amount {
@@ -291,10 +293,10 @@
             #card-table {
                 box-sizing: border-box;
                 display: grid;
-                justify-content: stretch;
+                /* justify-content: stretch; */
                 align-content: stretch;
-                justify-items: stretch;
-                align-items: stretch;
+                /* justify-items: stretch; */
+                /* align-items: stretch; */
                 grid-template-columns: 1fr 1fr 1fr;
                 grid-template-rows: 1fr 1fr 1fr 2fr;
                 column-gap: 2vw;
@@ -305,7 +307,7 @@
                     ". pot ."
                     "footer footer  footer";
 
-                height: calc(100vh - 76px);
+                height: calc(90vh - 76px);
                 border: 2px solid pink;
                 background-color: var(--table-green);
             }
@@ -327,7 +329,7 @@
                 text-align: center;
                 color: darkgreen;
                 text-shadow: 0 0.1em 0.4em rgb(124, 255, 163),
-                    -1px -1px 1px yellow;
+                    -1px -1px 1px lime;
 
                 font-size: calc(10px + var(--card-unit) * 2);
                 font-weight: bold;
@@ -348,6 +350,7 @@
                 box-shadow: 0.1em 0.2em 1em -0.2em black;
                 top: 100px;
                 left: 100px;
+                transition: top 0.7s, left 1s;
             }
 
             /*
@@ -438,7 +441,38 @@
             <button class="start-game">START GAME</button>
             <button class="next-phase">NEXT PHASE -></button>
         </div>
-        <!-- <script type="module" src="main.js"></script> -->
-        <script type="module" src="test-page.js"></script>
+        <div id="game-controls">
+            <form id="game-settings">
+                <h2>Game Controls</h2>
+                <h3>Game Type</h3>
+                <select name="game-type" id="game-select">
+                    <option value="">--Choose a Game--</option>
+                    <option value="5 Card Draw">5 Card Draw</option>
+                    <option value="7 Card Stud">7 Card Stud</option>
+                    <option value="Baseball">Baseball</option>
+                </select>
+                <div>
+                    <head>
+                        Wildcards
+                    </head>
+                    <input
+                        type="checkbox"
+                        id="wild-cards"
+                        name="wild-cards"
+                        checked
+                    />
+                    <label for="wild-cards">Wild Cards</label>
+                    <input type="number" name="wild-num" id="wild-num" />
+                </div>
+
+                <!-- <div>
+                    <input type="checkbox" id="wilds" name="wilds" />
+                    <label for="wilds">Wilds</label>
+                </div> -->
+                <button type="submit">Start Game</button>
+            </form>
+        </div>
+        <script type="module" src="main.js"></script>
+        <!-- <script type="module" src="test-page.js"></script> -->
     </body>
 </html>

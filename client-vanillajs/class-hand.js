@@ -1,13 +1,14 @@
-import {
-    // getHandDetails,
-    // getHandName,
-    getBestHandWithWildcards,
-    evaluateHand
-} from "./compare-hands-bitwise.js";
+// import {
+//     // getHandDetails,
+//     // getHandName,
+//     getBestHandWithWildcards,
+//     evaluateHand
+// } from "./compare-hands-bitwise.js";
 import { Player } from "./class-player.js";
 import { Card } from "./class-card.js";
 import { view } from "./view.js";
 import { game } from "./game.js";
+import { getHandDetails } from "./check-hands.js";
 
 const cardRanks = "*23456789TJQKA";
 const cardSuits = "*DCHS";
@@ -62,7 +63,7 @@ class Hand {
         this._cards = [];
         this._handString = "";
         this._wildsArray = [];
-        this._bestHand = [];
+        // this._bestHand = [];
         this._handDetails = {};
         // this._maxCardsToTrade = 3; // later we'll set this based on game, or whether  player has an ace
         this._deck = deck;
@@ -95,6 +96,7 @@ class Hand {
             this._element.classList.remove("won");
         };
         this.refreshCardElements = () => {
+            // Update hand display
             this.hideHandWon();
             //
             const cardsHolder = this._element.querySelector(".cards");
@@ -108,6 +110,7 @@ class Hand {
         };
         //
         this.drawHand = (numCards, facing) => {
+            // draw cards from deck
             this._cards = drawCardsFromDeck(numCards, this._deck);
             for (const card of this._cards) {
                 card.facing = facing;
@@ -116,7 +119,8 @@ class Hand {
             this.updateProperties();
         };
         this.drawCard = (numCards, facing) => {
-            console.log("Hand.drawCard()");
+            // draw card from deck
+            console.log("Hand.drawCard()",numCards,facing);
             let loops = 0;
             while (loops < numCards) {
                 const newCard = drawCardFromDeck(this._deck, this);
@@ -126,6 +130,8 @@ class Hand {
             }
             this.refreshCardElements();
             this.updateProperties();
+            // return the last card (only useful when drawing 1?)
+            return this._cards.slice(-1)[0];
         };
         this.tradeCards = () => {
             // get rid of cardsToTrade
@@ -155,30 +161,68 @@ class Hand {
             this.refreshCardElements();
             this.updateProperties();
         };
+        this.clearHand = () =>{
+            // remove all cards from hand
+            this._cards.length = 0;
+            this.updateProperties();
+            this.refreshCardElements();
+            view.hideHandName(this);
+        }
+        this.arrangeByBest = () => {
+            const newOrder = [];
+            const cardsDupe = [...this.cards];
+            for(const cardString of this.bestHand){
+                let cardIndex = cardsDupe.findIndex(c => (cardString[1] === '*' && c.isWild) || c.name === cardString);
+                // console.log('cardString:',cardString);
+                newOrder.push(cardsDupe.splice(cardIndex,1)[0]);
+                // console.log('card:',newOrder.slice(-1)[0]);
+            }
+            this._cards.length = 0;
+            this._cards.push(...newOrder,...cardsDupe);
+            this.refreshCardElements()
+        }
         this.hilightBestHand = () => {
             // console.log('hilightBestHand()');
-            const bestCards = this.cards.filter((c) =>
-                this.bestHand.includes(c.name)
-            );
-            for (const card of bestCards) {
-                view.hilightCard(card);
+            // console.log("this.bestHand", this.bestHand);
+            // console.log("this.cards:", this.cards);
+            let handWilds = this.bestHand.filter((c) => c[1] === "*").length;
+            // console.log("handWIlds:", handWilds);
+            let cNum = this.cards.length;
+            while (cNum--) {
+                const c = this.cards[cNum];
+                // console.log("c:", c);
+                // console.log(
+                //     "this.bestHand.includes(c.name):",
+                //     this.bestHand.includes(c.name)
+                // );
+                // console.log("c.isWild :", c.isWild);
+                // console.log("handWilds > 0", handWilds > 0);
+                if (
+                    this.bestHand.includes(c.name) ||
+                    (c.isWild && handWilds > 0)
+                ) {
+                    // console.log("Hilight", c);
+                    view.hilightCard(c);
+                    if (c.isWild) handWilds--;
+                }
             }
         };
         this.updateProperties = () => {
             console.log("Hand.updateProperties()");
             // when we update the hand (change any cards)
             this._handString = this._cards.map((c) => c.name).join(" ");
-            console.log("this._handString:", this._handString);
+            // console.log("this._handString:", this._handString);
             // _handString
-            this._wildsArray = this._cards
-                .map((c) => `${c.isWild ? "**" : c.string}`);
-            console.log("this._wildsArray:", this._wildsArray);
+            this._wildsArray = this._cards.map(
+                (c) => `${c.isWild ? "**" : c.string}`
+            );
+            // console.log("this._wildsArray:", this._wildsArray);
             // _wildsArray
-            this._bestHand = getBestHandWithWildcards(this._wildsArray);
-            console.log("this._bestHand:", this._bestHand);
+            // this._bestHand = getBestHandWithWildcards(this._wildsArray);
+            // console.log("this._bestHand:", this._bestHand);
             // _bestHand // bestHand must be in place for handName to use getHandName()
-            this._handDetails = evaluateHand(this._bestHand);
-            console.log("this._handDetails:", this._handDetails);
+            this._handDetails = getHandDetails(this);
+            // console.log("this._handDetails:", this._handDetails);
             // _handDetails
         };
     }
@@ -206,22 +250,26 @@ class Hand {
         return this.handString.split(" ");
     }
 
-    get handName() {
+    get name() {
         // name of hand eg. "two pair"
         return this._handDetails.name;
     }
 
     get bestHand() {
         // a string
-        return this._bestHand;
+        return this._handDetails.cards;
+    }
+
+    get rank() {
+        return this._handDetails.rank;
+    }
+
+    get value() {
+        return this._handDetails.faces.join("");
     }
 
     get handDetails() {
         return this._handDetails;
-    }
-
-    get displayElement() {
-        return this._element;
     }
 
     get player() {

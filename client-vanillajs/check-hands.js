@@ -26,12 +26,32 @@ function getRankFromCard(cardString) {
 function getFaceFromCardString(cardString) {
     return String.fromCharCode(77 - getRankFromCard(cardString));
 }
+function getFacesFromCards(cardsAr) {
+    return cardsAr.map((c) => getFaceFromCardString(c));
+}
 function getCardStringFromFace(face) {
+    // console.log('getCardStringFromFace() face:',face);
     const rankIndex = 77 - face.charCodeAt(0);
     // console.log(face,'--',cardRanks[rankIndex]);
     return cardRanks[rankIndex];
 }
-function getHandDetails(handArray) {
+
+function getHandDetails(hand) {
+    const handLength = 5;
+    // hand is instance of Hand class
+    const handArray = [];
+    for (const c of hand.cards) {
+        handArray.push(c.isWild ? "**" : c.name);
+    }
+    if(handArray.length < handLength){
+        // Set hand to High Card
+        return {
+            cards:handArray,
+            faces:getFacesFromCards(handArray),
+            rank:9,
+            name:handRanks[9]
+        }
+    }
     console.log("getHandDetails()", handArray);
     const cards = handArray.filter((card) => card !== "**");
     cards.sort(sortByCharCode);
@@ -48,37 +68,155 @@ function getHandDetails(handArray) {
     const duplicates = Object.values(counts).reduce(count, {});
     console.log("faces:", faces);
     console.log("duplicates:", duplicates);
-    const highestDuplicates = Math.max(...Object.keys(duplicates));
-    // console.log("highestDuplicates:", highestDuplicates);
+    // ---------------------
+    //  Check All Hand Ranks
+    // ---------------------
+    const fiveOfAKind = getBest5ofAKind();
+    if (fiveOfAKind) {
+        fiveOfAKind.rank = 0;
+        fiveOfAKind.name = handRanks[0];
+        return fiveOfAKind;
+    }
+    const straightResults = checkStraight();
+    let bestStraightFlush = straightResults.bestStraightFlush;
+    if (bestStraightFlush) {
+        bestStraightFlush.rank = 1;
+        bestStraightFlush.name = handRanks[1];
+        return bestStraightFlush;
+    }
+    const fourOfAKind = getBest4ofAKind();
+    if (fourOfAKind) {
+        fourOfAKind.rank = 2;
+        fourOfAKind.name = handRanks[2];
+        return fourOfAKind;
+    }
+    const fullHouse = getBestFullHouse();
+    if (fullHouse) {
+        fullHouse.rank = 3;
+        fullHouse.name = handRanks[3];
+        return fullHouse;
+    }
+    const flush = getBestFlush();
+    if (flush) {
+        flush.rank = 4;
+        flush.name = handRanks[4];
+        return flush;
+    }
+    const straight = straightResults.bestStraight;
+    if (straight) {
+        straight.rank = 5;
+        straight.name = handRanks[5];
+        return straight;
+    }
+    const threeOfAKind = getBest3ofAKind();
+    if (threeOfAKind) {
+        threeOfAKind.rank = 6;
+        threeOfAKind.name = handRanks[6];
+        return threeOfAKind;
+    }
+    const twoPair = getBestTwoPair();
+    if (twoPair) {
+        twoPair.rank = 7;
+        twoPair.name = handRanks[7];
+        return twoPair;
+    }
+    const pair = getBest2ofAKind();
+    if (pair) {
+        pair.rank = 8;
+        pair.name = handRanks[8];
+        return pair;
+    }
+    const highCard = getBestHighCardHand();
+    if (highCard) {
+        highCard.rank = 9;
+        highCard.name = handRanks[9];
+        return highCard;
+    }
+
     // ---------------------
     // 5 of a kind?
     // ---------------------
     // highest duplicates key + numWild >= 5
-    const isFiveOfAKind = highestDuplicates + numWild >= 5;
-    console.log("5 kind", isFiveOfAKind);
-    if (isFiveOfAKind) {
-        const bestFive = Object.entries(counts).find(
-            ([k, v]) => v + numWild >= 5
-        )[0];
-        console.log("best5:", bestFive);
+    // console.log("5 kind", isFiveOfAKind);
+    console.log("best 5 of a kind: ", getBest5ofAKind()?.cards);
+    function getBest5ofAKind() {
+        const handLength = 5;
+        let naturals;
+        if (numWild >= handLength) {
+            naturals = new Array(handLength).fill("A*");
+        } else {
+            let best5face = Object.entries(counts).find(
+                ([k, v]) => v + numWild >= 5
+            );
+            best5face = best5face && best5face[0];
+            if (!best5face) return false;
+            const best5card = getCardStringFromFace(best5face);
+            naturals = getNaturals(best5card);
+            naturals.length = Math.min(naturals.length, 5);
+            // console.log("5naturals:", naturals);
+            let wildsLeft = numWild;
+            while (naturals.length < 5 && wildsLeft > 0) {
+                naturals.unshift(best5card + "*");
+                wildsLeft--;
+            }
+        }
+
+        // No kicker
+        // console.log("best5:", best5card);
+        return {
+            cards: naturals,
+            faces: getFacesFromCards(naturals),
+        };
     }
+
     // ---------------------
     // Straight Flush?
     // ---------------------
-    const straightResults = checkStraight();
-    let bestStraightFlush = straightResults.bestStraightFlush?.cards;
+    // const straightResults = checkStraight();
+    // let bestStraightFlush = straightResults.bestStraightFlush?.cards;
     console.log("bestStraightFlush:", bestStraightFlush);
 
     // ---------------------
     //  4 of a kind?
     // ---------------------
-    const isFourOfAKind = highestDuplicates + numWild >= 4;
-    console.log("isFourOfAKind:", isFourOfAKind);
-    if (isFourOfAKind) {
-        let best4 = Object.entries(counts).find(([k, v]) => v + numWild >= 4);
-        best4 = best4 && best4[0];
-        console.log("best4:", best4);
+
+    console.log("best 4 kind: ", getBest4ofAKind()?.cards);
+    function getBest4ofAKind() {
+        let best4face = Object.entries(counts).find(
+            ([k, v]) => v + numWild >= 4
+        );
+        best4face = best4face && best4face[0];
+        if (!best4face) return false;
+        const best4card = getCardStringFromFace(best4face);
+        // console.log("best4:", best4card);
+        // find the best kicker
+        // console.log("cards:", cards);
+        const naturals = getNaturals(best4card);
+        naturals.length = Math.min(naturals.length, 4);
+        // const finalHand = addWildsToMatching(naturals,best4card,4);
+        // function addWildsToMatching(matchesSoFarAr,matchString,matchLength){
+        let wildsLeft = numWild;
+        // cards.filter(c=>c[0]===best4card);
+        // console.log("naturals:", naturals);
+        // console.log("wildsLeft:", wildsLeft);
+        while (naturals.length < 4 && wildsLeft > 0) {
+            naturals.unshift(best4card + "*");
+            wildsLeft--;
+        }
+        // Kicker
+
+        if (wildsLeft > 0) {
+            // in this case, the hand is really 4 of a kind
+            naturals.push(`${best4face === "A" ? "K" : "A"}*`);
+            wildsLeft--;
+        } else {
+            // add next-highest card from cards
+            naturals.push(cards.find((c) => !naturals.includes(c)));
+        }
+
+        return { cards: naturals, faces: getFacesFromCards(cards) };
     }
+
     // ---------------------
     //  Full House?
     // ---------------------
@@ -92,25 +230,43 @@ function getHandDetails(handArray) {
     //     []
     // ).reverse();
     // console.log('dupeKeys:',dupeKeys);
-    const bestFullHouse = checkBestFullHouse();
+    const bestFullHouse = getBestFullHouse();
 
-    function checkBestFullHouse() {
+    function getBestFullHouse() {
         let best3 = Object.entries(counts).find(([k, v]) => v + numWild >= 3);
         if (best3) {
             best3 = best3[0];
-            const wildsLeft = numWild - Math.max(0, 3 - counts[best3]);
+            let wildsLeft = numWild - Math.max(0, 3 - counts[best3]);
             let best2 = Object.entries(counts).find(
                 ([k, v]) => v + wildsLeft >= 2 && k !== best3
             );
             if (best2) {
                 best2 = best2[0];
-                return [best3, best3, best3, best2, best2];
+                const naturals3 = getNaturals(getCardStringFromFace(best3));
+                naturals3.length = Math.min(naturals3.length, 3);
+                const naturals2 = getNaturals(getCardStringFromFace(best2));
+                naturals2.length = Math.min(naturals2.length, 2);
+                wildsLeft = numWild;
+                while (naturals3.length < 3 && wildsLeft > 0) {
+                    naturals3.unshift(getCardStringFromFace(best3) + "*");
+                    wildsLeft--;
+                }
+                while (naturals2.length < 2 && wildsLeft > 0) {
+                    naturals2.unshift(getCardStringFromFace(best2) + "*");
+                    wildsLeft--;
+                }
+
+                // no kicker
+                return {
+                    faces: [best3, best3, best3, best2, best2],
+                    cards: [...naturals3, ...naturals2],
+                };
             }
         }
         return false;
     }
 
-    console.log("bestFullHouse ", bestFullHouse);
+    console.log("bestFullHouse ", bestFullHouse?.cards);
     // ---------------------
     //  Flush?
     // ---------------------
@@ -118,9 +274,9 @@ function getHandDetails(handArray) {
     console.log("bestFlush", getBestFlush());
     function getBestFlush() {
         const handLength = 5;
-        console.log("getBestFlush()");
+        // console.log("getBestFlush()");
         // use cards in order, preceded by all wilds
-        const wilds = new Array(numWild).fill("**");
+        const wilds = new Array(numWild).fill("A*");
         // starting with first (highest) card,
         for (let c = 0; c < cards.length; c++) {
             const flushHand = [...wilds, cards[c]];
@@ -139,7 +295,10 @@ function getHandDetails(handArray) {
                 }
                 if (flushHand.length >= handLength) {
                     flushHand.length = handLength;
-                    return flushHand;
+                    return {
+                        cards: flushHand,
+                        faces: getFacesFromCards(flushHand),
+                    };
                     // break;
                 }
             }
@@ -199,30 +358,107 @@ function getHandDetails(handArray) {
     // ---------------------
     //  3 of a kind?
     // ---------------------
-    const is3ofAKind = highestDuplicates + numWild >= 3;
-    console.log("is3ofAKind:", is3ofAKind);
-    if (is3ofAKind) {
+
+    console.log("best 3 of a kind: ", getBest3ofAKind()?.cards);
+    function getBest3ofAKind() {
+        const handLength = 5;
         let best3 = Object.entries(counts).find(([k, v]) => v + numWild >= 3);
         best3 = best3 && best3[0];
-        console.log("best3:", best3);
+        if (!best3) return false;
+        const naturals = getNaturals(getCardStringFromFace(best3));
+        naturals.length = Math.min(naturals.length, 3);
+        let wildsLeft = numWild;
+        while (naturals.length < 3 && wildsLeft > 0) {
+            naturals.unshift(getCardStringFromFace(best3) + "*");
+            wildsLeft--;
+        }
+        // Kickers
+        while (naturals.length < handLength) {
+            if (wildsLeft > 0) {
+                // in this case, the hand is really 4 of a kind
+                for (const r of [...cardRanks].reverse()) {
+                    if (!naturals.find((c) => c[0] === r)) {
+                        naturals.push(r + "*");
+                        wildsLeft--;
+                        break;
+                    }
+                }
+            } else {
+                // add next-highest card from cards
+                naturals.push(cards.find((c) => !naturals.includes(c)));
+            }
+        }
+        // console.log("best3:", best3);
+        if (naturals.length === handLength) {
+            return {
+                cards: naturals,
+                faces: getFacesFromCards(naturals),
+            };
+        }
+        return false;
     }
+
     // ---------------------
     //  2 Pair?
     // ---------------------
-    const is2pair = checkBest2pair();
 
-    console.log("is2pair:", is2pair);
-    function checkBest2pair() {
+    console.log("best 2 pair: ", getBestTwoPair()?.cards);
+    function getBestTwoPair() {
         let best2 = Object.entries(counts).find(([k, v]) => v + numWild >= 2);
         if (best2) {
             best2 = best2[0];
-            const wildsLeft = numWild - Math.max(0, 3 - counts[best2]);
+            let wildsLeft = numWild - Math.max(0, 2 - counts[best2]);
             let nextBest2 = Object.entries(counts).find(
                 ([k, v]) => v + wildsLeft >= 2 && k !== best2
             );
             if (nextBest2) {
                 nextBest2 = nextBest2[0];
-                return [best2, best2, nextBest2, nextBest2];
+                const naturals2a = getNaturals(getCardStringFromFace(best2));
+                naturals2a.length = Math.min(naturals2a.length, 3);
+                const naturals2b = getNaturals(
+                    getCardStringFromFace(nextBest2)
+                );
+                naturals2b.length = Math.min(naturals2b.length, 2);
+                wildsLeft = numWild;
+                while (naturals2a.length < 2 && wildsLeft > 0) {
+                    naturals2a.unshift(best2 + "*");
+                    wildsLeft--;
+                }
+                while (naturals2b.length < 2 && wildsLeft > 0) {
+                    naturals2b.unshift(nextBest2 + "*");
+                    wildsLeft--;
+                }
+                // Kicker
+                let kicker = "";
+                if (wildsLeft > 0) {
+                    for (const r of [...cardRanks].reverse()) {
+                        if (
+                            !(
+                                naturals2a.find((c) => c[0] === r) ||
+                                naturals2b.find((c) => c[0] === r)
+                            )
+                        ) {
+                            kicker = r + "*";
+                            break;
+                        }
+                    }
+                } else {
+                    kicker = cards.find(
+                        (c) =>
+                            !naturals2a.includes(c) && !naturals2b.includes(c)
+                    );
+                }
+
+                return {
+                    faces: [
+                        best2,
+                        best2,
+                        nextBest2,
+                        nextBest2,
+                        getFaceFromCardString(kicker),
+                    ],
+                    cards: [...naturals2a, ...naturals2b, kicker],
+                };
             }
         }
         return false;
@@ -230,16 +466,87 @@ function getHandDetails(handArray) {
     // ---------------------
     //  2 of a kind?
     // ---------------------
-    const is2ofAKind = highestDuplicates + numWild >= 2;
-    let best2ofAKind = Object.entries(counts).find(
-        ([k, v]) => v + numWild >= 2
-    );
-    best2ofAKind = best2ofAKind && best2ofAKind[0];
-    console.log("is2ofAKind:", is2ofAKind);
-    console.log("best2Kind:", best2ofAKind);
+    console.log("best 2 of a kind: ", getBest2ofAKind()?.cards);
+    function getBest2ofAKind() {
+        const handLength = 5;
+        let best2 = Object.entries(counts).find(([k, v]) => v + numWild >= 2);
+        best2 = best2 && best2[0];
+        if (!best2) return false;
+        const naturals = getNaturals(getCardStringFromFace(best2));
+        naturals.length = Math.min(naturals.length, 3);
+        let wildsLeft = numWild;
+        while (naturals.length < 2 && wildsLeft > 0) {
+            naturals.unshift(best2 + "*");
+            wildsLeft--;
+        }
+        // Kickers
+        while (naturals.length < handLength) {
+            if (wildsLeft > 0) {
+                // in this case, the hand is really 3 of a kind or better
+                for (const r of [...cardRanks].reverse()) {
+                    if (!naturals.find((c) => c[0] === r)) {
+                        console.log(r, "not in", naturals);
+                        naturals.push(r + "*");
+                        wildsLeft--;
+                        break;
+                    }
+                }
+            } else {
+                // add next-highest card from cards
+                naturals.push(
+                    cards.find((c) => !naturals.find((n) => n[0] === c[0]))
+                );
+            }
+        }
+        // console.log("best2:", best2);
+        if (naturals.length === handLength) {
+            return {
+                cards: naturals,
+                faces: getFacesFromCards(naturals),
+            };
+        }
+        return false;
+    }
     // ---------------------
     //  High Card?
     // ---------------------
+
+    console.log("best high card hand:", getBestHighCardHand()?.cards);
+    function getBestHighCardHand() {
+        const handLength = 5;
+        const handCards = [];
+        let loopTemp = 0;
+        while (handCards.length < handLength && loopTemp < cards.length) {
+            const nextCard = cards[loopTemp];
+            if (!handCards.find((f) => nextCard[0] === f[0])) {
+                handCards.push(nextCard);
+            }
+            loopTemp++;
+        }
+        let wildsLeft = numWild;
+        while (wildsLeft > 0 && handCards.length < handLength) {
+            handCards.push(
+                [...cardRanks]
+                    .reverse()
+                    .find((c) => !handCards.find((f) => f[0] === c[0])) + "*"
+            );
+        }
+        loopTemp = 0;
+        //  Out of options, this will no longer be a high-card hand
+        while (handCards.length < handLength && loopTemp < cards.length) {
+            const nextCard = cards[loopTemp];
+            if (!handCards.includes(nextCard)) {
+                handCards.push(nextCard);
+            }
+            loopTemp++;
+        }
+        handCards.sort(sortByCharCode);
+        //  console.log('handCards: ',handCards);
+        return {
+            cards: handCards,
+            faces: getFacesFromCards(handCards),
+        };
+    }
 
     // console.log("isStraight:", isStraight);
 
@@ -251,11 +558,11 @@ function getHandDetails(handArray) {
 
     // break;
     // const flush = suits[0] === suits[4];
-    const first = faces[0].charCodeAt(0);
+    // const first = faces[0].charCodeAt(0);
     //Also handle low straight
     // const lowStraight = faces.join("") === "AJKLM";
-    const lowStraight = faces.join("").includes("AJKLM");
-    faces[0] = lowStraight ? "N" : faces[0];
+    // const lowStraight = faces.join("").includes("AJKLM");
+    // faces[0] = lowStraight ? "N" : faces[0];
     // const straight =
     //     lowStraight ||
     //     faces.every((f, index) => f.charCodeAt(0) - first === index);
@@ -281,6 +588,20 @@ function getHandDetails(handArray) {
         name: handRanks[rank],
     };
 */
+
+    function getNaturals(cardToMatch) {
+        cardToMatch = cardToMatch[0];
+        const cardsDupe = [...cards];
+        const naturals = [];
+        let c = cardsDupe.length;
+        while (c--) {
+            if (cardsDupe[c][0] === cardToMatch) {
+                naturals.push(cardsDupe.splice(c, 1)[0]);
+            }
+        }
+        return naturals;
+    }
+
     function cardCode(cardString) {
         return cardString.charCodeAt(0);
     }
@@ -358,19 +679,23 @@ function getHandDetails(handArray) {
                 checkAddWildsBefore();
                 // console.log("end sequence:", sequenceCards);
                 // Check for low straight - !!! Make it work for hands other than 5 cards
-                if (sequenceCards.length === 4 && sequenceCards[0][0] == 5 && sequenceCards[3][0] == 2) {
+                if (
+                    sequenceCards.length === 4 &&
+                    sequenceCards[0][0] == 5 &&
+                    sequenceCards[3][0] == 2
+                ) {
                     const aceIndex = cards.findIndex((c) => c[0] === "A");
-                    console.log('sequenceCards:',sequenceCards);
-                    console.log('aceIndex:',aceIndex);
-                    console.log('faces:',faces);
-                    console.log('cards:',cards);
+                    // console.log("sequenceCards:", sequenceCards);
+                    // console.log("aceIndex:", aceIndex);
+                    // console.log("faces:", faces);
+                    // console.log("cards:", cards);
                     if (aceIndex !== -1) {
                         sequenceCards.push(cards[aceIndex]);
                         sequence.push(faces[aceIndex]);
                     }
                 }
                 if (sequence.length >= handLength) {
-                    console.log('push sequence:',sequenceCards);
+                    // console.log("push sequence:", sequenceCards);
                     straights.push(sequence);
                     straightCards.push(sequenceCards);
                     break;
@@ -391,9 +716,11 @@ function getHandDetails(handArray) {
         let bestStraightCards = null;
         let highestCard = Infinity;
         for (let s = 0; s < straights.length; s++) {
+            //
             // Check for straight flush
+            //
             // console.log("straight:", straights[s]);
-            console.log("straightCards:", straightCards[s]);
+            // console.log("straightCards:", straightCards[s]);
             const highCode = cardCode(straights[s][0]);
             // console.log(highCode);
             if (highCode < highestCard) {
@@ -413,7 +740,7 @@ function getHandDetails(handArray) {
                 });
             } else {
                 // can we make it a flush with leftover wilds?
-                let wcLeft = handLength - nonWild.length;
+                let wcLeft = numWild - (handLength - nonWild.length);
                 // which suit is there the most of?
                 const suits = nonWild.map((a) => a[1]);
                 // console.log("straight suits:", suits);
@@ -429,9 +756,11 @@ function getHandDetails(handArray) {
                 // console.log('suitCounts[mostSuit] + wcLeft:',suitCounts[mostSuit]+wcLeft)
                 if (suitCounts[mostSuit] + wcLeft >= nonWild.length) {
                     // This can be a straight flush.  Make it
+                    // console.log("straight hand: ", straightCards[s]);
                     const suitOnlyHand = straightCards[s].map((c) =>
                         c[1] !== mostSuit ? c[0] + "*" : c
                     );
+                    // console.log("suitOnlyHand: ", suitOnlyHand);
                     // console.log('Straight Flush: ',suitOnlyHand)
                     straightFlushes.push({
                         faces: straights[s],
@@ -479,7 +808,7 @@ function getHandDetails(handArray) {
                     if (sequence[0] === "A") {
                         // try adding after
                         const face = String.fromCharCode(getEndCode() + 1);
-                        console.log("Add ", face, " to end of ", sequence);
+                        // console.log("Add ", face, " to end of ", sequence);
                         sequence.push(face);
                         sequenceCards.push(getCardStringFromFace(face) + "*");
                     } else {
@@ -487,7 +816,7 @@ function getHandDetails(handArray) {
                         const face = String.fromCharCode(
                             cardCode(sequence[0]) - 1
                         );
-                        console.log("Add ", face, " to front of ", sequence);
+                        // console.log("Add ", face, " to front of ", sequence);
                         sequence.unshift(face);
                         sequenceCards.unshift(
                             getCardStringFromFace(face) + "*"
@@ -498,5 +827,19 @@ function getHandDetails(handArray) {
         }
     }
 }
-
-export { getHandDetails };
+function compareHands(h1, h2) {
+    // h1 h2 instances of Hand class
+    // console.log('compareHands()',h1,'v',h2)
+    // returns whether h1 beats h2
+    if (h1.rank === h2.rank) {
+        if (h1.value < h2.value) {
+            return 1;
+        } else if (h1.value > h2.value) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+    return h1.rank < h2.rank ? 1 : -1;
+}
+export { getHandDetails, compareHands };

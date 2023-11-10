@@ -74,7 +74,8 @@ tradeButton.addEventListener("pointerdown", (event) => {
     switch (game.currentPhase.type) {
         case "draw":
             clientPlayer.hand.tradeCards();
-            game.nextPhase();
+            // game.nextPhase();
+            betting.nextBettor();
             break;
         case "discard":
             clientPlayer.hand.discard();

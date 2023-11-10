@@ -66,7 +66,7 @@ document
 const setHandsSelection = () => {
     for (const p of players) {
         const hand = p.hand;
-        const element = hand.displayElement;
+        const element = hand.element;
         element.addEventListener("pointerdown", (event) => {
             handSelected = hand;
         });
