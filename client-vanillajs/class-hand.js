@@ -1,23 +1,13 @@
-// import {
-//     // getHandDetails,
-//     // getHandName,
-//     getBestHandWithWildcards,
-//     evaluateHand
-// } from "./compare-hands-bitwise.js";
 import { Player } from "./class-player.js";
 import { Card } from "./class-card.js";
 import { view } from "./view.js";
 import { game } from "./game.js";
 import { getHandDetails } from "./check-hands.js";
 
-const cardRanks = "*23456789TJQKA";
-const cardSuits = "*DCHS";
-
 const drawCardFromDeck = (deck, hand) => {
     if (deck.length <= 0) {
         return new Card(":)", hand);
     }
-
     const newCard = new Card(
         deck.splice(Math.floor(Math.random() * deck.length), 1)[0],
         hand
@@ -25,35 +15,9 @@ const drawCardFromDeck = (deck, hand) => {
     console.log("game.checkWild(newCard):", game.checkWild(newCard));
     newCard.isWild = game.checkWild(newCard);
     // !! Maybe isWild shoud get assigned in the Card class ?
+    // !! Or in the game{} ?
     return newCard;
 };
-
-const drawCardsFromDeck = (numCards, deck) => {
-    // return string of hand
-    // let hand = "";
-    const cards = [];
-    let loops = 0;
-    while (loops < numCards) {
-        cards.push(drawCardFromDeck(deck, this));
-        loops++;
-    }
-    return cards;
-};
-
-// const getBestHand = (hand) => {
-//     // gets bets 5 card hand
-//     // doesn't work with fewer than 5 cards
-//     const hands = getCombinations(hand.handArray, 5);
-//     const firstHand = hands.splice(0, 1)[0];
-//     let bestHandString = firstHand.join(" ");
-//     for (const h of hands) {
-//         const handNext = h.join(" ");
-//         if (compareHands(handNext, bestHandString) === "WIN") {
-//             bestHandString = handNext;
-//         }
-//     }
-//     return bestHandString;
-// };
 
 class Hand {
     constructor(player, deck) {
@@ -63,9 +27,7 @@ class Hand {
         this._cards = [];
         this._handString = "";
         this._wildsArray = [];
-        // this._bestHand = [];
         this._handDetails = {};
-        // this._maxCardsToTrade = 3; // later we'll set this based on game, or whether  player has an ace
         this._deck = deck;
         //
         this.hideHand = () => {
@@ -108,16 +70,7 @@ class Hand {
                 index++;
             }
         };
-        //
-        this.drawHand = (numCards, facing) => {
-            // draw cards from deck
-            this._cards = drawCardsFromDeck(numCards, this._deck);
-            for (const card of this._cards) {
-                card.facing = facing;
-            }
-            this.refreshCardElements();
-            this.updateProperties();
-        };
+ 
         this.drawCard = (numCards, facing) => {
             // draw card from deck
             console.log("Hand.drawCard()",numCards,facing);
@@ -176,6 +129,9 @@ class Hand {
                 // console.log('cardString:',cardString);
                 newOrder.push(cardsDupe.splice(cardIndex,1)[0]);
                 // console.log('card:',newOrder.slice(-1)[0]);
+            }
+            for(const dupe of cardsDupe){
+                view.dimCard(dupe);
             }
             this._cards.length = 0;
             this._cards.push(...newOrder,...cardsDupe);

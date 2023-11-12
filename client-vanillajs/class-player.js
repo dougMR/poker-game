@@ -31,7 +31,12 @@ class Player {
         return this._inHand;
     }
     set inHand(value) {
-        if (typeof value === "boolean") this._inHand = value;
+        if (typeof value === "boolean") {
+            this._inHand = value;
+            if(this._inHand === true){
+                view.inHand(this);
+            }
+        }
     }
     get name() {
         return this._name;
@@ -67,14 +72,14 @@ class Player {
     set amountBetThisRound(value) {
         if (typeof value === "number") {
             this._amountBetThisRound = value;
-            console.log(this.name, 'set amountBet:',value);
+            console.log(this.name, "set amountBet:", value);
         }
     }
-    get hasPlayed () {
+    get hasPlayed() {
         return this._hasPlayedThisHand;
     }
-    set hasPlayed (value) {
-        if(typeof value === "boolean"){
+    set hasPlayed(value) {
+        if (typeof value === "boolean") {
             this._hasPlayedThisHand = value;
         }
     }

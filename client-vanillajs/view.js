@@ -5,6 +5,7 @@ import { game } from "./game.js";
 
 // This lives on the Client side
 // All visuals, and all listeners
+// Maybe make a server-side view{} that sends messages to client-side view{}
 
 const betControls = document.getElementById("bet-controls");
 const checkCallButton = betControls.querySelector(".check-call");
@@ -140,6 +141,10 @@ const view = {
         <div class="stack">$100</div></div>`;
         return containerEl.querySelector(".hand-holder");
     },
+    inHand: function (player){
+        player.hand.element.classList.remove("folded");
+        player.seat.element.classList.remove("folded");
+    },
     foldHand: function (player) {
         // console.log('view:foldHand()');
         const hand = player.hand;
@@ -173,7 +178,9 @@ const view = {
     showElement: function (element) {
         element.classList.remove("hidden");
     },
-
+    dimCard: function(card) {
+        card.element.classList.add('dimmed');
+    },
     setStack: function (player, amount) {
         // console.log("view.setStack()", player.name, amount);
         player.hand.element.querySelector(".stack").innerHTML = `$${amount}`;

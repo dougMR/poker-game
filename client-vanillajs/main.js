@@ -41,8 +41,8 @@ const autoStart = () => {
         newPlayer.stack = 50;
     }
     // game.startGame("7 Card Stud");
-    // game.startGame("5 Card Draw");
-    game.startGame("Baseball");
+    game.startGame("5 Card Draw");
+    // game.startGame("Baseball");
 };
 
 const clientPlayer = setClientPlayer("player", true);

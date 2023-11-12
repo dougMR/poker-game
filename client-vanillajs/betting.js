@@ -3,6 +3,7 @@ import { getNextOccupiedSeat, seats } from "./seats.js";
 import { view } from "./view.js";
 import { game } from "./game.js";
 
+// TURNS (within a game Phase)
 const betting = {
     currentBet: 0,
     pot: 0,
@@ -10,6 +11,7 @@ const betting = {
     currentBettor: null,
     inAnteRound: false,
     nextBettor: function () {
+        // End current bettor's turn
         console.log("nextBettor()");
         let bettor;
         if (!this.currentBettor) {
@@ -41,15 +43,19 @@ const betting = {
     },
 
     findNextBettor: function (player) {
-        console.log("findNextBetttor()", player.name);
+        // return the next bettor
+        // null if everyone has played
+        console.log("findNextBetttor() after", player.name);
         let bettor = getNextOccupiedSeat(player.seat.index).player;
         let tempLoops = 0;
         while (!bettor.inHand) {
             bettor = getNextOccupiedSeat(bettor.seat.index).player;
-            // console.log("bettor: ", bettor);
             if (!bettor || bettor === player || tempLoops > 9) {
+                // we don't seem to ever reach here
+                // but keep it as a safety net
                 console.error("betting: no player inHand");
-                // start next phase?
+                console.log("temploops:", tempLoops);
+                // maybe we should start next phase?
                 return null;
             }
             tempLoops++;
@@ -57,16 +63,18 @@ const betting = {
         return bettor;
     },
     activateBettor: function (who) {
+        // hilight this player (un-hilight others)
+        // show betting controls for this player
         console.log("activateBettor()", who.name);
         this.currentBettor = who;
         // enable bettor's controls
         view.hideBetControls();
         for (const player of players) {
             if (player === this.currentBettor) {
-                // enable betting controls
                 view.hilightPlayer(player);
                 if (player === clientPlayer) {
-                    // this gets handled different depending on whether it happens client or servere
+                    // all players will be clientPlayers once server is implemented
+                    // enable betting controls - only for active client
                     view.showBetControls();
                 }
             } else {
@@ -75,6 +83,7 @@ const betting = {
         }
     },
     startAnte: function (amount) {
+        // start ante round
         console.log("betting.startAnte()");
         this.inAnteRound = true;
         if (typeof amount != "number") {
@@ -92,6 +101,7 @@ const betting = {
         if (minBet > this.currentBettor.amountBetThisRound + amount) {
             alert("You must bet at least $" + minBet + ", or Fold");
         } else {
+            // bet is legit, apply it
             betting.raise(amount);
             betting.nextBettor();
         }
@@ -108,12 +118,8 @@ const betting = {
         betting.nextBettor();
     },
     getMinBet: function () {
-        console.log("getMinBet()");
-        console.log("currentBet:", this.currentBet);
-        console.log(
-            "currentBettor.amountBetThisRound:",
-            this.currentBettor.amountBetThisRound
-        );
+        // Return minimum amount to call
+        // console.log("getMinBet()");
         return Math.max(
             0,
             this.currentBet - this.currentBettor.amountBetThisRound
@@ -151,12 +157,13 @@ const betting = {
         if (game.getPlayersInHand().length === 1) {
             // One player left, they win
             this.endBettingPhase();
-            // Should we end the hand, or leavet that to another part of the app, such as 'game'?
+            // Should we end the hand, or leave that to another part of the app, such as 'game'?
         } else {
             this.nextBettor();
         }
     },
     checkPlayersBetsEven: function () {
+        // Is everyone settled up?
         for (const p of players) {
             if (p.inHand && p.amountBetThisRound < this.currentBet) {
                 return false;
@@ -166,15 +173,16 @@ const betting = {
     },
     endBettingPhase: function () {
         if (this.inAnteRound) this.endAnte();
-        this.currentBettor = this.firsitBettor = null;
+        this.currentBettor = null;
         this.currentBet = 0;
         view.unhilightAllPlayers();
         game.nextPhase();
     },
-    payPot: function (player) {
-        player.stack += this.pot;
-        this.pot = 0;
-        view.setPot(betting.pot);
+    payFromPot: function (player, amount) {
+        // give pot to player
+        player.stack += amount;
+        this.pot -= amount;
+        view.setPot(this.pot);
     },
 };
 

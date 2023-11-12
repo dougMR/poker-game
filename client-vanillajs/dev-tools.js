@@ -5,7 +5,7 @@ import { game } from "./game.js";
 import { view } from "./view.js"
 // ----------------------------------- dev tools ------------------------------------
 
-let handSelected = null;
+// let handSelected = null;
 const tools = document.getElementById("dev-controls");
 
 // Separate all this between Server and Client-only
@@ -18,18 +18,18 @@ tools.querySelector(".deal").addEventListener("pointerdown", (event) => {
     let numCards = Number(prompt("How many?", "5"));
     dealAll(numCards);
 });
-tools.querySelector(".trade").addEventListener("pointerdown", (event) => {
-    handSelected.tradeCards();
-});
-tools.querySelector(".discard").addEventListener("pointerdown", (event) => {
-    handSelected.discardCards();
-});
-tools.querySelector(".show-hand").addEventListener("pointerdown", (event) => {
-    handSelected?.showHand();
-});
-tools.querySelector(".hide-hand").addEventListener("pointerdown", (event) => {
-    handSelected?.hideHand();
-});
+// tools.querySelector(".trade").addEventListener("pointerdown", (event) => {
+//     handSelected.tradeCards();
+// });
+// tools.querySelector(".discard").addEventListener("pointerdown", (event) => {
+//     handSelected.discardCards();
+// });
+// tools.querySelector(".show-hand").addEventListener("pointerdown", (event) => {
+//     handSelected?.showHand();
+// });
+// tools.querySelector(".hide-hand").addEventListener("pointerdown", (event) => {
+//     handSelected?.hideHand();
+// });
 tools.querySelector(".bet").addEventListener("pointerdown", (event) => {
     const amount = Number(prompt("How much?", "5"));
     betting.bet(amount);
@@ -63,14 +63,14 @@ document
         betting.nextBettor();
     });
 
-const setHandsSelection = () => {
-    for (const p of players) {
-        const hand = p.hand;
-        const element = hand.element;
-        element.addEventListener("pointerdown", (event) => {
-            handSelected = hand;
-        });
-    }
-};
+// const setHandsSelection = () => {
+//     for (const p of players) {
+//         const hand = p.hand;
+//         const element = hand.element;
+//         element.addEventListener("pointerdown", (event) => {
+//             handSelected = hand;
+//         });
+//     }
+// };
 
-setTimeout(setHandsSelection, 1);
+// setTimeout(setHandsSelection, 1);
