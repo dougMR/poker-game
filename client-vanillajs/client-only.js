@@ -1,7 +1,7 @@
-import { clientPlayer } from "./main.js";
-import { betting } from "./betting.js";
+import { clientPlayer, betting, bet, game } from "./main.js";
+// import { betting, bet } from "./betting.js";
 import { view } from "./view.js";
-import { game } from "./game.js";
+// import { game } from "./game.js";
 
 // This and dev-tools.js and view.js are all client-side code
 
@@ -17,7 +17,7 @@ const tradeButton = betControls.querySelector(".trade");
 
 betButton.addEventListener("pointerdown", (event) => {
     // Submit Bet
-    betting.bet(Number(betSpan.innerHTML));
+    bet("bet", Number(betSpan.innerHTML));
 });
 
 const addToBet = (amount) => {
@@ -49,12 +49,19 @@ raiseControls.addEventListener("pointerdown", (event) => {
 
 // Check, Call, Raise, Fold
 checkCallButton.addEventListener("pointerdown", (event) => {
+    console.log("check-call button pressed");
     // check or call?
     const label = event.currentTarget.innerHTML;
     if (label === "CALL") {
-        betting.call();
+        // betting.call();
+        if (confirm("Call $" + betting.minBet + "?")) {
+            console.log("calling...");
+            bet("bet", betting.minBet);
+        }
+        // bet("call");
     } else if (label === "CHECK") {
-        betting.check();
+        // betting.check();
+        bet("check");
     }
 });
 raiseButton.addEventListener("pointerdown", (event) => {
@@ -67,18 +74,20 @@ raiseButton.addEventListener("pointerdown", (event) => {
 
 foldButton.addEventListener("pointerdown", (event) => {
     // Fold
-    betting.fold();
+    // betting.fold();
+    bet("fold");
 });
 
 tradeButton.addEventListener("pointerdown", (event) => {
     switch (game.currentPhase.type) {
         case "draw":
-            clientPlayer.hand.tradeCards();
+            // clientPlayer.hand.tradeCards();
             // game.nextPhase();
-            betting.nextBettor();
+            // betting.nextBettor();
+            bet("draw");
             break;
         case "discard":
-            clientPlayer.hand.discard();
+            clientPlayer.hand.discardCards();
             break;
     }
 });

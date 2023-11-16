@@ -1,36 +1,16 @@
-import { Player } from "./class-player.js";
-import { assignClientSeat, assignNextSeat } from "./seats.js";
-import { Hand } from "./class-hand.js";
+// import { Player } from "./class-player.js";
+// import { assignClientSeat, assignNextSeat } from "./seats.js";
+// import { Hand } from "./class-hand.js";
 import { view } from "./view.js";
 import { betting } from "./betting.js";
 // import { compareHands } from "./compare-hands-bitwise.js";
 import { compareHands } from "./check-hands.js";
-import { getNextOccupiedSeat } from "./seats.js";
+// import { getNextOccupiedSeat } from "./seats.js";
 
 //
 // PLAYERS
 //
-const players = [];
 
-const addPlayer = (name, isClient) => {
-    // All players will be Client once Server is implemented
-    if (
-        !players.some(
-            (player) => player.name.toLowerCase() === name.toLowerCase()
-        )
-    ) {
-        const newPlayer = new Player(name);
-        if (isClient) {
-            newPlayer.seat = assignClientSeat(newPlayer);
-        } else {
-            newPlayer.seat = assignNextSeat(newPlayer);
-        }
-        newPlayer.hand = new Hand(newPlayer, deck);
-        players.push(newPlayer);
-        return newPlayer;
-    }
-    return null;
-};
 
 //
 // GAME (handles Phases)
@@ -40,38 +20,10 @@ const game = {
     phaseIndex: 0,
     currentPhase: null,
     dealer: players[0],
-    getCurrentGame: function () {
-        // returns the game object, with phases, wildcards etc
-        return gameTypes[this.type];
-    },
-    nextDealer: function () {
-        if (!this.dealer) {
-            this.dealer = players[0];
-        } else {
-            let dealerSeatIndex = this.dealer.seat.index;
-            this.dealer = getNextOccupiedSeat(dealerSeatIndex).player;
-        }
-
-        console.log("nextDealer()", this.dealer.name);
-        view.positionDealerButton();
-    },
-    getPlayersInHand: function () {
-        return players.filter((p) => p.inHand);
-    },
-    startGame: function (gameType) {
-        // Starts hand
-        console.log("game.startGame()");
-        rebuildDeck();
-        for (const p of players) {
-            p.inHand = true;
-            p.hand.clearHand();
-        }
-        this.nextDealer();
-        this.type = gameType;
-        this.phaseIndex = 0;
-        this.startPhase();
-    },
+    
+   
     checkWild: function (card) {
+        console.log('game.checkWild()')
         // Is this card wild in the current game?
         // return true or false
         const wildCards = this.getCurrentGame().wildCards;
@@ -91,79 +43,6 @@ const game = {
             }
         }
         return false;
-    },
-    nextPhase: function () {
-        // End the current Phase and move on
-        console.log("game.nextPhase()");
-        this.phaseIndex++;
-        // console.log("this.phaseIndex:", this.phaseIndex);
-        if (this.phaseIndex >= this.getCurrentGame().phases.length) {
-            // Restart game
-            this.startGame(this.type);
-        } else {
-            this.startPhase();
-        }
-    },
-    startPhase: function () {
-        console.log("");
-        console.log("game.startPhase()");
-        // if 1 or fewer players left, end game
-        if (this.getPlayersInHand().length <= 1) {
-            this.showdown();
-            return;
-        }
-        this.currentPhase = {
-            ...this.getCurrentGame().phases[game.phaseIndex],
-        };
-        const currentPhase = this.currentPhase;
-        console.log("Phase: ", currentPhase.type);
-        // Display Game and Phase
-        view.output(
-            game.type + "<br />Phase: " + currentPhase.type.toUpperCase()
-        );
-        const wilds = this.getCurrentGame().wildCards;
-        if (wilds) {
-            // Display list of Wilds
-            let wildString = "Wilds: ";
-            for (const wName of wilds) {
-                if (wilds.indexOf(wName) !== 0) {
-                    wildString += ", ";
-                }
-                wildString += wName[1] === "*" ? wName[0] : wName;
-            }
-            view.output(wildString, true);
-        }
-
-        // show / hide betting controls
-        const bettingControls = document.getElementById("bet-controls");
-        view.hideElement(bettingControls);
-
-        // Handle Phase type
-        if (currentPhase.type === "ante") {
-            // betting round where options are Call (ante amount) or Fold
-            betting.startAnte(currentPhase.amount);
-        } else if (currentPhase.type === "deal") {
-            dealAll(currentPhase.up, "up");
-            dealAll(currentPhase.down, "down");
-            dealAll(currentPhase.hole, "hole");
-            dealCommunity(currentPhase.community);
-            this.nextPhase();
-        } else if (currentPhase.type === "bet") {
-            // step through each player in order, starting with left of the dealer
-            betting.resetBet();
-            betting.nextBettor();
-        } else if (currentPhase.type === "draw") {
-            // discard and draw from deck
-            betting.resetBet();
-            betting.nextBettor();
-        } else if (currentPhase.type === "trade") {
-            // trade w another hand (other player, or even community)
-        } else if (currentPhase.type === "discard") {
-            //
-        } else if (currentPhase.type === "showdown") {
-            // find winner
-            game.showdown();
-        }
     },
     isDrawPhase: function () {
         // Is this a Phase where we draw/trade cards?
@@ -201,7 +80,7 @@ const game = {
                         player.hand.bestHand,
                         "vs",
                         winningPlayers[0].hand.bestHand
-                    )
+                    );
                     const result = compareHands(
                         player.hand,
                         winningPlayers[0].hand
@@ -217,10 +96,6 @@ const game = {
                     player.hand.showHand();
                     player.hand.showHandName();
                 }
-                // console.log(
-                //     "cards:",
-                //     player.hand.cards.map((c) => c.name).join(" ")
-                // );
 
                 console.log("BEST:", winningPlayers[0].hand.name);
             }
@@ -254,58 +129,10 @@ const game = {
     },
 };
 
-const buildDeck = () => {
-    const deck = [];
-    for (const s of cardSuits.split("")) {
-        for (const r of cardRanks.split("")) {
-            deck.push(r + s);
-        }
-    }
-    return deck;
-};
-
-const rebuildDeck = () => {
-    deck.length = 0;
-    deck.push(...buildDeck());
-};
-
-const dealCommunity = (numCards) => {
-    console.log("dealCommunity", numCards);
-};
-
-const dealAll = (numCards, facing) => {
-    if (numCards > 0) {
-        // !! change this to deal in the order of seats, not players
-        for (const player of game.getPlayersInHand()) {
-            dealCard(numCards, player, facing);
-        }
-    }
-};
-const dealCard = (numCards, player, facing) => {
-    // console.log("dealCard():", player.name, numCards);
-    if (numCards > 0) {
-        const cardDealt = player.hand.drawCard(numCards, facing);
-
-        // Is it a Draw Again card?
-        const drawAgainCards = game.getCurrentGame().drawAgain;
-        if (
-            (facing === "up" || facing === "community") &&
-            drawAgainCards &&
-            drawAgainCards.find((c) =>
-                c[1] === "*" ? c[0] == cardDealt.name[0] : c === cardDealt.name
-            )
-        ) {
-            // Draw Again
-            dealCard(1, player, facing);
-        }
-    }
-};
 
 //
 // DECK
 //
-
-const deck = [];
 const cardRanks = "23456789TJQKA";
 const cardSuits = "DCHS";
 const gameTypes = {
@@ -358,6 +185,22 @@ const gameTypes = {
         wildCards: ["3*", "9*"],
         drawAgain: ["4*"],
     },
+    /*
+    Not ready for no-peeky games
+    hand evaluation (getHandDetails()) only set up for 5+ card hands .
+    No-peeky needs to compare hands of 1,2,3,4 cards as well
+    because active player has to turn cards up until their hand is highest.
+
+    "Night Baseball": {
+        phases: [
+            { type: "ante", amount: 5 },
+            { type: "deal", up: 0, down: 7, hole: 0, community: 0 },
+            { type: "turn-cards" },
+        ],
+        wildCards: ["3*", "9*"],
+        drawAgain: ["4*"],
+    },
+    */
 };
 
-export { game, addPlayer, players, dealAll, dealCard, buildDeck };
+export { game };

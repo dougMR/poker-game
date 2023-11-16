@@ -1,7 +1,5 @@
-import { betting } from "./betting.js";
-import { Card } from "./class-card.js";
-import { clientPlayer, players } from "./main.js";
-import { game } from "./game.js";
+// import { betting } from "./betting.js";
+import { clientPlayer, players, game, betting, emitCard } from "./main.js";
 
 // This lives on the Client side
 // All visuals, and all listeners
@@ -71,8 +69,8 @@ const view = {
         card.element.classList.remove("hilight");
     },
     buildCardEl: function (card) {
-        // console.log('buildCardEl():',card.string)
-        const cardString = card.string;
+        // console.log("buildCardEl():", card);
+        const cardString = card.name;
         const cardEl = document.createElement("div");
         cardEl.classList.add("card");
         const suit = cardString[1];
@@ -85,21 +83,33 @@ const view = {
         cardEl.innerHTML = `<span class="number">${face}</span><span class="suit ${suit}">${getSuitSymbol(
             suit
         )}</span>`;
-        // return cardEl;
+        // add listener here? Or somewhere else?  Like in updateGame()?
         cardEl.addEventListener("pointerdown", (event) => {
-            if (game.isDrawPhase()) {
+            if (game.isDrawPhase) {
+                const playerCards = players.find((p) => p.id === card.playerId)
+                    .hand.cards;
+                const canTradeMore =
+                    playerCards.filter((c) => c.markedToTrade).length <
+                    game.currentPhase.tradeLimit;
                 if (
                     card.markedToTrade ||
-                    (!card.markedToTrade &&
-                        card.hand.cards.filter((c) => c._markedToTrade).length <
-                            game.currentPhase.tradeLimit)
+                    (canTradeMore && !card.markedToTrade)
                 ) {
                     card.markedToTrade = !card.markedToTrade;
                     event.currentTarget.classList.toggle("selected");
                 }
+                emitCard(clientPlayer.id, card);
+            } else if (game.isTurnCardPhase) {
+                // turn the card up
+                card.facing = "up";
+                emitCard(clientPlayer.id, card);
             }
         });
         return cardEl;
+    },
+    setPlayerName: function (player) {
+        player.hand.element.querySelector(".player-name").innerHTML =
+            player.name;
     },
     showWild: function (card) {
         // console.log('showWild():',card.isWild);
@@ -109,9 +119,10 @@ const view = {
             card.element.classList.remove("wild");
         }
     },
-    setCardFacing: function (card, facing) {
-        // console.log('setCardFaceing():',facing);
+    setCardFacing: function (card) {
+        console.log("setCardFaceing():", card.facing);
         // console.log('card:',card);
+        const facing = card.facing;
         // default show card to everyone?
         if (facing === "up") {
             // show card to everyone
@@ -123,7 +134,13 @@ const view = {
             this.hide(card);
         } else if (facing === "hole") {
             // hide from group, show to client
-            if (card.hand.player !== clientPlayer) {
+            // console.log("card.hand.player:", card.hand.player.id);
+            // console.log("clientPlayer:", clientPlayer.id);
+            // console.log(
+            //     "card.hand.player === clientPlayer",
+            //     card.hand.player === clientPlayer
+            // );
+            if (card.playerId !== clientPlayer.id) {
                 this.hide(card);
             } else {
                 card.element.classList.add("hole");
@@ -133,36 +150,52 @@ const view = {
             // card's hand's player should be community, not a player.  Maybe community *is a Player instance?.  With no seat.
         }
     },
-    buildHandDisplay: function (seat) {
-        const containerEl = seat.element;
+    buildHandDisplay: function (player) {
+        const containerEl = player.seat.element;
         containerEl.innerHTML = `<div class="hand-holder">
         <div class="top-info"><h3 class="player-name"></h3><p class="hand-name"></p></div>
         <div class="cards"></div>
         <div class="stack">$100</div></div>`;
         return containerEl.querySelector(".hand-holder");
     },
-    inHand: function (player){
-        player.hand.element.classList.remove("folded");
-        player.seat.element.classList.remove("folded");
-    },
-    foldHand: function (player) {
-        // console.log('view:foldHand()');
-        const hand = player.hand;
-        // console.log('cards:',hand.cards);
-        for (const card of hand.cards) {
-            if (!card.facing === "down") {
-                setCardFacing(card, "hole");
-            }
+    refreshCards: function (player) {
+        console.log("view.refreshCards()");
+        const cardsHolder = player.hand.element.querySelector(".cards");
+        cardsHolder.innerHTML = "";
+        let index = 0;
+        for (const card of player.hand.cards) {
+            cardsHolder.append(card.element);
+            index++;
         }
-        hand.element.classList.add("folded");
-        player.seat.element.classList.add("folded");
     },
-    showHandName: function (hand) {
-        console.log("hand.name:", hand.name);
-        hand.element.querySelector(".hand-name").innerHTML = hand.name;
+    getCardEls: function (player) {
+        return player.hand.element.querySelectorAll(".card");
     },
-    hideHandName: function (hand) {
-        hand.element.querySelector(".hand-name").innerHTML = '';
+    inHand: function (player) {
+        if (player.inHand) {
+            player.hand.element.classList.remove("folded");
+            player.seat.element.classList.remove("folded");
+        } else {
+            // Fold Hand
+            for (const card of player.hand.cards) {
+                if (!card.facing === "down") {
+                    setCardFacing(card, "hole");
+                }
+            }
+            player.hand.element.classList.add("folded");
+            player.seat.element.classList.add("folded");
+        }
+    },
+    showHandName: function (player) {
+        console.log("hand.name:", player.hand.name);
+        player.hand.element.querySelector(".hand-name").innerHTML =
+            player.hand.name;
+    },
+    hideHandName: function (player) {
+        player.hand.element.querySelector(".hand-name").innerHTML = "";
+    },
+    hideHandWon: function (player) {
+        player.hand.element.classList.remove("won");
     },
     hide: function (instance) {
         // console.log("hide() instance.element:", instance.element);
@@ -178,12 +211,14 @@ const view = {
     showElement: function (element) {
         element.classList.remove("hidden");
     },
-    dimCard: function(card) {
-        card.element.classList.add('dimmed');
+    dimCard: function (card) {
+        card.element.classList.add("dimmed");
     },
-    setStack: function (player, amount) {
+    setStack: function (player) {
         // console.log("view.setStack()", player.name, amount);
-        player.hand.element.querySelector(".stack").innerHTML = `$${amount}`;
+        player.hand.element.querySelector(
+            ".stack"
+        ).innerHTML = `$${player.stack}`;
     },
     output: function (msg, add) {
         const outputDiv = document.getElementById("output");
@@ -210,8 +245,8 @@ const view = {
     },
     setBetControls: function (player) {
         console.log("setBetControls() current bet:", betting.currentBet);
-        console.log("game.isDrawPhase():", game.isDrawPhase());
-        if (game.isDrawPhase()) {
+        // console.log("game.isDrawPhase():", game.isDrawPhase());
+        if (game.isDrawPhase) {
             // show trade button
             this.showElement(tradeButton);
             this.hideElement(checkCallButton);
@@ -221,8 +256,7 @@ const view = {
             this.hideElement(tradeButton);
             this.showElement(checkCallButton);
             this.showElement(foldButton);
-            checkCallButton.innerHTML =
-                betting.currentBet > 0 ? "CALL" : "CHECK";
+            checkCallButton.innerHTML = betting?.minBet > 0 ? "CALL" : "CHECK";
             if (betting.inAnteRound) {
                 this.hideElement(raiseButton);
             } else {
@@ -233,9 +267,15 @@ const view = {
         }
     },
     positionDealerButton: function () {
+        console.log("positionDealerButton()");
+        console.log("dealer:", game.dealer);
         const dealerSeatEl = game.dealer.seat.element;
-        const x = dealerSeatEl.offsetLeft + 30; //dealerSeatEl.offsetWidth;
-        const y = dealerSeatEl.offsetTop + 5; //dealerSeatEl.offsetHeight * 0.5;
+        const x = dealerSeatEl.querySelector(".player-name").offsetLeft + 0; //dealerSeatEl.offsetWidth;
+        const y =
+            dealerSeatEl.querySelector(".player-name").offsetTop -
+            dealerButtonElement.offsetHeight; //dealerSeatEl.offsetHeight * 0.5;
+        console.log("x:", x);
+        console.log("y:", y);
         dealerButtonElement.style.left = x + "px";
         dealerButtonElement.style.top = y + "px";
         // console.log("view:postionDealerButton()", x, y);

@@ -6,6 +6,7 @@
 //     evaluateHand,
 // } from "./compare-hands-bitwise.js";
 import { getHandDetails } from "./check-hands.js";
+// import { Card } from "./class-card.js";
 
 const buildDeck = () => {
     const deck = [];
@@ -408,15 +409,24 @@ for (let i = 0; i < 7; i++) {
 // ['JD', 'JH', '9S', '4C', '9H', '**', '**', '**', '3C', 'QC']
 // ['8H', '**', '**', 'KD', '**', '9C', '3S', 'JD', '9S', '**']
 // console.log("HAND", ['JS', '4D', '8H', 'TC', '4S', '2D', 'AS', '3C', '**', '**']);
-// const myHand = ["7C", "8S", "**", "4S", "**", "TS", "**"];
-// console.log(
-//     "best:",
-//     getHandDetails(myHand).cards,
-//     handRanks[getHandDetails(myHand).rank]
-// );
-const handDetails = getHandDetails(theHand);
-console.log('best: ',handDetails.cards, handRanks[handDetails.rank]);
+const myCards = [];
+for (let i = 0; i < 3; i++) {
+    let name = "";
+    if (Math.random() < 0.15) {
+        name = "**";
+    } else {
+        const index = Math.floor(Math.random() * deck.length);
+        name = deck.splice(index, 1)[0];
+    }
+    myCards.push({ name });
+}
+const myHand = { cards: myCards };
+const handDetails = getHandDetails(myHand);
+// const handDetails = getHandDetails(theHand);
+console.log("best: ", handDetails.cards, handRanks[handDetails.rank]);
 
+
+// console.log('socket:',socket);
 //
 // REGEX HAND EVALUATIONS
 //
@@ -431,3 +441,8 @@ Two pair:             ".*(\\w)\\1.*(\\w)\\2.*#.*"
 One pair:             ".*(\\w)\\1.*#.*"
 High card:            (none)
 */
+
+// TURN-CARDS PHASE
+const turnCards = (player) => {
+    player.turningCards = true;
+};

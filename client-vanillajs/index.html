@@ -73,19 +73,24 @@
         </div> -->
         <div id="dev-controls">
             <!-- For dev testing -->
-            <button class="deal">DEAL CARDS</button>
+            <!-- <button class="deal">DEAL CARDS</button>
             <button class="trade">TRADE CARDS</button>
-            <button class="discard">DISCARD CARDS</button>
+            <button class="discard">DISCARD CARDS</button> -->
+            <!-- <button class="start-game">Start Game</button> -->
+            <button class="start-game">START GAME</button>
+            <button class="next-phase">NEXT PHASE -></button>
+            <button class="show-betting-object">betting</button>
+            <button class="show-game-object">game</button>
+            <button class="show-players-object">players</button>
             <button class="bet">BET</button>
             <button class="call">CALL</button>
             <button class="fold">FOLD</button>
             <button class="showdown">SHOWDOWN</button>
-            <button class="show-hand">SHOW HAND</button>
-            <button class="hide-hand">HIDE HAND</button>
+            <!-- <button class="show-hand">SHOW HAND</button>
+            <button class="hide-hand">HIDE HAND</button> -->
             <button class="deal-community">COMMUNITY CARD</button>
-            <button class="num-players">SET NUM PLAYERS</button>
-            <button class="start-game">START GAME</button>
-            <button class="next-phase">NEXT PHASE -></button>
+            <!-- <button class="num-players">SET NUM PLAYERS</button> -->
+            
         </div>
         <div id="game-controls">
             <form id="game-settings">
@@ -118,6 +123,12 @@
                 <button type="submit">Start Game</button>
             </form>
         </div>
+        <div id="name-prompt" class="modal">
+            <h3>Please enter your player name.</h3>
+            <input type="text" name="player-name" id="">
+            <button type="submit">SUBMIT</button>
+        </div>
+        <!-- <script src="./socket.io/socket.io.js"></script> -->
         <script type="module" src="main.js"></script>
         <!-- <script type="module" src="test-page.js"></script> -->
     </body>

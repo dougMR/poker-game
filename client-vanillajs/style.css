@@ -53,7 +53,7 @@ body,
 }
 .hand-holder .top-info h3.player-name,
 .hand-holder .top-info p.hand-name {
-    margin-bottom: 0;
+    margin: 0;
     text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.5);
 }
 
@@ -307,7 +307,7 @@ Grid Table
 }
 
 .seat {
-    padding: calc(var(--card-unit) * 2);
+    padding: calc( 0.5rem var(--card-unit));
 
     /* background: radial-gradient(
         closest-side,
@@ -315,6 +315,11 @@ Grid Table
         transparent 70%
     ); */
 }
+
+.seat.client-player {
+    padding: 0.5em;
+}
+
 .seat.folded {
     background: black;
     /* filter: grayscale(80%); */
@@ -345,6 +350,25 @@ Grid Table
     top: 100px;
     left: 100px;
     transition: top 0.7s, left 1s;
+}
+
+/*
+
+Prompts & Modals
+
+*/
+.modal {
+    position:absolute;
+    padding: 1em;
+    border-radius:1em;
+    background-color: white;
+    box-shadow: 0 1em 1em 0 rgba(0,0,0,0.5);
+    top: 45vh;
+    left: 50vw;
+    transform: translate(-50%, -50%);
+}
+.modal.hidden {
+    display: none;
 }
 
 /*
