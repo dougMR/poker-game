@@ -1,6 +1,6 @@
 // import { dealAll, dealCard, clientPlayer, players } from "./main.js";
 // import { betting } from "./betting.js";
-import { socketFunctions, game, betting, players } from "./main.js";
+import { startGame, game, betting, players, showNamePrompt } from "./main.js";
 // import { game,addPlayer } from "./game.js";
 import { view } from "./view.js";
 // ----------------------------------- dev tools ------------------------------------
@@ -32,29 +32,29 @@ const bettingControls = document.getElementById("bet-controls");
 // });
 tools.querySelector(".start-game").addEventListener("pointerdown", (event) => {
     console.log("start-game button pressed");
-    socketFunctions.startGame();
+    startGame();
 });
 // tools.querySelector(".start-game").addEventListener("pointerdown", (event) => {
 //     console.log('start-game button pressed');
 //     // game.startGame("7 Card Stud");
 // });
-tools.querySelector(".bet").addEventListener("pointerdown", (event) => {
-    const amount = Number(prompt("How much?", "5"));
-    betting.bet(amount);
-});
-tools.querySelector(".call").addEventListener("pointerdown", (event) => {
-    betting.call();
-});
-tools.querySelector(".fold").addEventListener("pointerdown", (event) => {
-    betting.fold();
-});
-tools.querySelector(".showdown").addEventListener("pointerdown", (event) => {
-    game.showdown();
-});
+// tools.querySelector(".bet").addEventListener("pointerdown", (event) => {
+//     const amount = Number(prompt("How much?", "5"));
+//     betting.bet(amount);
+// });
+// tools.querySelector(".call").addEventListener("pointerdown", (event) => {
+//     betting.call();
+// });
+// tools.querySelector(".fold").addEventListener("pointerdown", (event) => {
+//     betting.fold();
+// });
+// tools.querySelector(".showdown").addEventListener("pointerdown", (event) => {
+//     game.showdown();
+// });
 
-tools.querySelector(".next-phase").addEventListener("pointerdown", (event) => {
-    game.nextPhase();
-});
+// tools.querySelector(".next-phase").addEventListener("pointerdown", (event) => {
+//     game.nextPhase();
+// });
 
 tools
     .querySelector(".show-betting-object")
@@ -71,6 +71,11 @@ tools
     .addEventListener("pointerdown", (event) => {
         console.log("players:", players);
     });
+tools
+    .querySelector(".join-game")
+    .addEventListener("pointerdown", (event) => {
+        showNamePrompt();
+    });
 // tools.querySelector(".num-players").addEventListener("pointerdown", (event) => {
 //     let numPlayers = Number(prompt("How many?", "5"));
 //     for (let i = 0; i < numPlayers - 1; i++) {
@@ -80,11 +85,11 @@ tools
 //     }
 // });
 
-document
-    .querySelector(".next-bettor")
-    .addEventListener("pointerdown", (event) => {
-        betting.nextBettor();
-    });
+// document
+//     .querySelector(".next-bettor")
+//     .addEventListener("pointerdown", (event) => {
+//         betting.nextBettor();
+//     });
 
 // const setHandsSelection = () => {
 //     for (const p of players) {

@@ -7,45 +7,48 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0"
         />
         <title>Poker Multiplayer</title>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <div id="card-table">
-            <div class="opponent-player seat"></div>
-            <div class="opponent-player seat"></div>
-            <div class="opponent-player seat"></div>
-            <div class="opponent-player seat"></div>
-            <div class="pot-area">
-                pot
-                <div class="pot-amount">$<span class="num">0</span></div>
-                <p id="output"></p>
-                <div id="bet-controls">
-                    <button class="check-call">CHECK/CALL</button>
-                    <button class="raise">RAISE</button>
-                    <button class="fold">FOLD</button>
-                    <div class="raise-controls">
-                        BET <button class="up">UP</button
-                        ><button class="down">DOWN</button> $<span
-                            class="bet-amount"
-                            >0</span
-                        >
-                        <br />
-                        <button class="bet">BET</button>
+        <div id="game-holder">
+            <div id="card-table">
+                <div class="opponent-player seat"></div>
+                <div class="opponent-player seat"></div>
+                <div class="opponent-player seat"></div>
+                <div class="opponent-player seat"></div>
+                <div class="pot-area">
+                    <div class="pot-amount money">
+                        $<span class="num">0</span>
                     </div>
-                    <button class="trade">DRAW</button>
+                    <!-- <p id="output"></p> -->
+                    <div id="bet-controls">
+                        <button class="check-call">CHECK/CALL</button>
+                        <button class="raise">RAISE</button>
+                        <button class="fold">FOLD</button>
+                        <div class="raise-controls money">
+                            BET<br />
+                            <button class="up">UP</button
+                            > <button class="down">DOWN</button>
+                            <p class="amount">
+                                $<span class="bet-amount">0</span>
+                            </p>
+                            <button class="bet">BET</button>
+                        </div>
+                        <button class="trade">DRAW</button>
+                    </div>
+                    <!-- <br />
+                <button class="next-bettor">NEXT BETTOR</button> -->
                 </div>
-                <br />
-                <button class="next-bettor">NEXT BETTOR</button>
+                <div class="opponent-player seat"></div>
+                <div class="opponent-player seat"></div>
+                <!-- <div class="community-cards">community cards?</div> -->
+                <div class="opponent-player seat"></div>
+                <div class="client-player seat">P</div>
             </div>
-            <div class="opponent-player seat"></div>
-            <div class="opponent-player seat"></div>
-            <!-- <div class="community-cards">community cards?</div> -->
-            <div class="opponent-player seat"></div>
-            <div class="client-player seat">P</div>
-        </div>
-        <div id="dealer-button">D</div>
+            <div id="dealer-button">D</div>
+            <p id="output"></p>
 
-        <!-- <div class="hand-holder">
+            <!-- <div class="hand-holder">
             <div class="top-info">
                 <h3 class="player-name"></h3>
                 <p class="hand-name"></p>
@@ -56,7 +59,7 @@
             <div class="stack">$100</div>
         </div> -->
 
-        <!-- <div id="output"></div>
+            <!-- <div id="output"></div>
         <div id="player-hand">
             <p id="player-stack">$100</p>
         </div>
@@ -71,26 +74,27 @@
             </div>
             <button class="showdown">SHOWDOWN</button>
         </div> -->
-        <div id="dev-controls">
-            <!-- For dev testing -->
-            <!-- <button class="deal">DEAL CARDS</button>
+            <div id="dev-controls">
+                <!-- For dev testing -->
+                <!-- <button class="deal">DEAL CARDS</button>
             <button class="trade">TRADE CARDS</button>
             <button class="discard">DISCARD CARDS</button> -->
-            <!-- <button class="start-game">Start Game</button> -->
-            <button class="start-game">START GAME</button>
-            <button class="next-phase">NEXT PHASE -></button>
-            <button class="show-betting-object">betting</button>
-            <button class="show-game-object">game</button>
-            <button class="show-players-object">players</button>
-            <button class="bet">BET</button>
-            <button class="call">CALL</button>
-            <button class="fold">FOLD</button>
-            <button class="showdown">SHOWDOWN</button>
-            <!-- <button class="show-hand">SHOW HAND</button>
+                <!-- <button class="start-game">Start Game</button> -->
+                <button class="start-game">START HAND</button>
+                <!-- <button class="next-phase">NEXT PHASE -></button> -->
+                <button class="show-betting-object">betting</button>
+                <button class="show-game-object">game</button>
+                <button class="show-players-object">players</button>
+                <!-- <button class="bet">BET</button> -->
+                <!-- <button class="call">CALL</button> -->
+                <!-- <button class="fold">FOLD</button> -->
+                <!-- <button class="showdown">SHOWDOWN</button> -->
+                <!-- <button class="show-hand">SHOW HAND</button>
             <button class="hide-hand">HIDE HAND</button> -->
-            <button class="deal-community">COMMUNITY CARD</button>
-            <!-- <button class="num-players">SET NUM PLAYERS</button> -->
-            
+                <button class="deal-community">COMMUNITY CARD</button>
+                <button class="join-game">JOIN GAME</button>
+                <!-- <button class="num-players">SET NUM PLAYERS</button> -->
+            </div>
         </div>
         <div id="game-controls">
             <form id="game-settings">
@@ -123,11 +127,22 @@
                 <button type="submit">Start Game</button>
             </form>
         </div>
-        <div id="name-prompt" class="modal">
+        <!-- <div id="name-prompt" class="modal">
             <h3>Please enter your player name.</h3>
             <input type="text" name="player-name" id="">
             <button type="submit">SUBMIT</button>
-        </div>
+        </div> -->
+        <dialog id="prompt-modal" class="modal">
+            <h3 class="message"></h3>
+            <input
+                class="answer"
+                type="text"
+                name="answer-input"
+                autocomplete="on"
+            />
+            <button class="cancel" type="submit">Cancel</button>
+            <button class="ok" type="submit">OK</button>
+        </dialog>
         <!-- <script src="./socket.io/socket.io.js"></script> -->
         <script type="module" src="main.js"></script>
         <!-- <script type="module" src="test-page.js"></script> -->

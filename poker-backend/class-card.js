@@ -1,7 +1,8 @@
 // import { view } from "./view.js";
 import { Hand } from "./class-hand.js";
+import { game } from "./game.js";
 
-console.log("hello from class-card.js")
+console.log("hello from class-card.js");
 
 class Card {
     constructor(cardString, hand) {
@@ -12,7 +13,7 @@ class Card {
         this._facing = "up";
         this._string = cardString;
         // isWild gets set externally
-        this._isWild = false;
+        this._isWild = game.checkWild(cardString);
         // if markedToTrade, card will get replaced when "draw" button is pressed
         this._markedToTrade = false;
         // when cards are on server, can they store a reference to their front-end element?
@@ -25,6 +26,7 @@ class Card {
         this.show = () => {
             // view.show(this);
             // view.setCardFacing(this,"up");
+            this.facing = "up";
         };
     }
     get facing() {
@@ -87,7 +89,7 @@ class Card {
             isWild: this.isWild,
             markedToTrade: this.markedToTrade,
             facing: this.facing,
-            playerId: this.hand.player.id
+            playerId: this.hand.player.id,
         };
     }
 }

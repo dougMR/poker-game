@@ -5,38 +5,32 @@ import { getNextOccupiedSeat, seats } from "./seats.js";
 import { game } from "./game.js";
 import { emitBetting, emitPlayers } from "./server.js";
 
-// TURNS (within a game Phase)
+// TURNS (within a game Phase) Rounds?
 const betting = {
     currentBet: 0,
-    pot: 0,
-    // firstBettor: null,
     currentBettor: null,
+    pot: 0,
     inAnteRound: false,
-    clearStates: function (){
-        console.log('betting.clearStates()');
+    clearStates: function () {
+        console.log("betting.clearStates()");
         if (this.inAnteRound) this.endAnte();
-        // this.currentBettor = null;
         this.currentBet = 0;
-        // this.firstBettor = null;
+        this.currentBettor = null;
+        this.resetBet();
     },
     nextBettor: function () {
         // End current bettor's turn
-        console.log(" betting.nextBettor(), after",this.currentBettor?.name);
-        console.log('this.currentBettor: ',this.currentBettor?.name);
-        console.log('!this.currentBettor:',!this.currentBettor)
+        console.log(" betting.nextBettor(), after", this.currentBettor?.name);
+        console.log(players.map((p) => p.name + " hasPlayed?: " + p.hasPlayed));
+        console.log("(game phase - ", game.currentPhase.type);
         let bettor;
-        if (!this.currentBettor ) {
-            console.log('no currentBettor');
+        if (!this.currentBettor) {
+            console.log("no currentBettor");
             // first bettor of game
             bettor = this.findNextBettor(game.dealer);
-            for (const p of players) {
-                p.hasPlayed = false;
-            }
-            // What if bettor is null?
+            this.clearHasPlayed();
             this.activateBettor(bettor);
-            // this.firstBettor = this.currentBettor;
         } else {
-            this.currentBettor.hasPlayed = true;
             if (
                 game
                     .getPlayersInHand()
@@ -44,17 +38,22 @@ const betting = {
                 this.checkPlayersBetsEven()
             ) {
                 // Everyone has had a turn and everyone's even
-                // Everyone has bet.  Betting round over
+                // Betting round over
                 this.endBettingPhase();
+                return;
             } else {
-                // Next
+                // Next Bettor
                 bettor = this.findNextBettor(this.currentBettor);
                 this.activateBettor(bettor);
             }
         }
-        console.log('(end of nextBettor) this.currentBettor: ',this.currentBettor?.name);
-        console.log('--end betting.nextBettor()');
-        if(this.currentBettor)emitBetting();
+        this.currentBettor.hasPlayed = true;
+        console.log(
+            "(end of nextBettor) this.currentBettor: ",
+            this.currentBettor?.name
+        );
+        console.log("--end betting.nextBettor()");
+        if (this.currentBettor) emitBetting();
         emitPlayers();
     },
     findNextBettor: function (player) {
@@ -82,25 +81,38 @@ const betting = {
         // show betting controls for this player
         console.log("betting.activateBettor()", who.name);
         this.currentBettor = who;
+        for (const p of players) {
+            p.isActivePlayer = p.id === this.currentBettor.id;
+        }
         // enable bettor's controls
         // view.hideBetControls();
-        for (const player of players) {
-            if (player === this.currentBettor) {
-                // view.hilightPlayer(player);
-                // if (player === clientPlayer) {
-                    // all players will be clientPlayers once server is implemented
-                    // enable betting controls - only for active client
-                    // view.showBetControls();
-                // }
-            } else {
-                // view.unhilightPlayer(player);
-            }
-        }
+        // for (const player of players) {
+        //     if (player === this.currentBettor) {
+        //         // view.hilightPlayer(player);
+        //         // if (player === clientPlayer) {
+        //             // all players will be clientPlayers once server is implemented
+        //             // enable betting controls - only for active client
+        //             // view.showBetControls();
+        //         // }
+        //     } else {
+        //         // view.unhilightPlayer(player);
+        //     }
+        // }
         // emitBetting();
+    },
+    clearActivePlayer: function () {
+        for (const p of players) {
+            p.isActivePlayer = false;
+        }
+    },
+    clearHasPlayed: function () {
+        for (const p of players) {
+            p.hasPlayed = false;
+        }
     },
     startAnte: function (amount) {
         // start ante round
-        console.log("betting.startAnte()");
+        console.log("betting.startAnte()", amount);
         this.inAnteRound = true;
         if (typeof amount != "number") {
             console.error("betting.startAnte() requires an amount.");
@@ -113,7 +125,7 @@ const betting = {
         this.inAnteRound = false;
     },
     bet: function (amount) {
-        console.log("betting.bet()",this.currentBettor?.name);
+        console.log("betting.bet()", this.currentBettor?.name);
         // Submit a bet
         const minBet = this.getMinBet();
         if (minBet > this.currentBettor.amountBetThisRound + amount) {
@@ -125,7 +137,7 @@ const betting = {
         }
     },
     raise: function (amount) {
-        console.log("betting.raise()",this.currentBettor?.name);
+        console.log("betting.raise()", this.currentBettor?.name);
         // Carry out the bet
         this.currentBettor.amountBetThisRound += amount;
         this.currentBettor.stack -= amount;
@@ -134,15 +146,15 @@ const betting = {
         // view.setPot(betting.pot);
     },
     check: function (amount) {
-        console.log("betting.check()",this.currentBettor?.name);
+        console.log("betting.check()", this.currentBettor?.name);
         betting.nextBettor();
     },
     getMinBet: function () {
         // Return minimum amount to call
-        console.log("betting.getMinBet()",this.currentBettor?.name);
+        console.log("betting.getMinBet()", this.currentBettor?.name);
         return Math.max(
             0,
-            this.currentBet - this.currentBettor.amountBetThisRound
+            this.currentBet - this.currentBettor?.amountBetThisRound
         );
     },
     call: function () {
@@ -155,7 +167,7 @@ const betting = {
             //     console.log("calling...");
             //     this.bet(minBet);
             // }
-            console.error("Can't call. Minimum bet is "+minBet);
+            console.error("Can't call. Minimum bet is " + minBet);
         } else {
             // Nothing to call
             // checking
@@ -188,7 +200,9 @@ const betting = {
     checkPlayersBetsEven: function () {
         console.log("betting.checkPlayersBetsEven()");
         // Is everyone settled up?
+        console.log("...betting.currentBet: ", this.currentBet);
         for (const p of players) {
+            console.log("...p.name in for:", p.amountBetThisRound);
             if (p.inHand && p.amountBetThisRound < this.currentBet) {
                 return false;
             }
@@ -204,7 +218,7 @@ const betting = {
         game.nextPhase();
     },
     payFromPot: function (player, amount) {
-        console.log("betting.payFromPot()",player.name,amount);
+        console.log("betting.payFromPot()", player.name, amount);
         // give pot to player
         player.stack += amount;
         this.pot -= amount;

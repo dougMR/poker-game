@@ -1,5 +1,5 @@
 // import { betting } from "./betting.js";
-import { clientPlayer, players, game, betting, emitCard } from "./main.js";
+import { clientPlayer, players, game, betting, emitCard, autoPlayOn } from "./main.js";
 
 // This lives on the Client side
 // All visuals, and all listeners
@@ -17,6 +17,10 @@ const betSpan = betControls.querySelector(".raise-controls .bet-amount");
 const tradeButton = betControls.querySelector(".trade");
 
 const dealerButtonElement = document.getElementById("dealer-button");
+
+const triggerButton = (button) => {
+    button.dispatchEvent(new PointerEvent('pointerdown'))
+}
 
 const getSuitSymbol = (suitLetter) => {
     let symbol = "";
@@ -98,6 +102,12 @@ const view = {
                     card.markedToTrade = !card.markedToTrade;
                     event.currentTarget.classList.toggle("selected");
                 }
+                // Show Draw Button?
+                if(playerCards.some(c=>c.markedToTrade)){
+                    tradeButton.textContent = "DRAW";
+                } else {
+                    tradeButton.textContent = "STICK";
+                }
                 emitCard(clientPlayer.id, card);
             } else if (game.isTurnCardPhase) {
                 // turn the card up
@@ -120,7 +130,7 @@ const view = {
         }
     },
     setCardFacing: function (card) {
-        console.log("setCardFaceing():", card.facing);
+        console.log("setCardFacing():", card.facing);
         // console.log('card:',card);
         const facing = card.facing;
         // default show card to everyone?
@@ -155,7 +165,7 @@ const view = {
         containerEl.innerHTML = `<div class="hand-holder">
         <div class="top-info"><h3 class="player-name"></h3><p class="hand-name"></p></div>
         <div class="cards"></div>
-        <div class="stack">$100</div></div>`;
+        <div class="stack money">$100</div></div>`;
         return containerEl.querySelector(".hand-holder");
     },
     refreshCards: function (player) {
@@ -188,11 +198,36 @@ const view = {
     },
     showHandName: function (player) {
         console.log("hand.name:", player.hand.name);
+        console.log(
+            "name element:",
+            player.hand.element.querySelector(".hand-name")
+        );
         player.hand.element.querySelector(".hand-name").innerHTML =
             player.hand.name;
     },
     hideHandName: function (player) {
         player.hand.element.querySelector(".hand-name").innerHTML = "";
+    },
+    hilightBestHand: function (player) {
+        const bestHand = player.hand.bestHand;
+        console.log("view.hilightBestHand()");
+        let handWilds = bestHand.filter((c) => c[1] === "*").length;
+        let cNum = player.hand.cards.length;
+        while (cNum--) {
+            const c = player.hand.cards[cNum];
+            // console.log("c:", c);
+            // console.log(
+            //     "bestHand.includes(c.name):",
+            //     bestHand.includes(c.name)
+            // );
+            // console.log("c.isWild :", c.isWild);
+            // console.log("handWilds > 0", handWilds > 0);
+            if (bestHand.includes(c.name) || (c.isWild && handWilds > 0)) {
+                // console.log("Hilight", c);
+                view.hilightCard(c);
+                if (c.isWild) handWilds--;
+            }
+        }
     },
     hideHandWon: function (player) {
         player.hand.element.classList.remove("won");
@@ -235,6 +270,7 @@ const view = {
     },
 
     hideBetControls: function () {
+        console.log('view.hideBetControls');
         this.hideElement(betControls);
     },
     showBetControls: function () {
@@ -243,15 +279,22 @@ const view = {
         this.hideElement(raiseControls);
         this.setBetControls();
     },
-    setBetControls: function (player) {
+    setBetControls: function () {
         console.log("setBetControls() current bet:", betting.currentBet);
-        // console.log("game.isDrawPhase():", game.isDrawPhase());
+        console.log("IS AUTOPLAY ON? ",autoPlayOn);
+        console.log("game.isDrawPhase:", game.isDrawPhase);
+        console.log("game.currentPhase:",game.currentPhase);
+        console.log("betting.minBet:",betting.minBet);
         if (game.isDrawPhase) {
             // show trade button
             this.showElement(tradeButton);
+            tradeButton.textContent = "Stand Pat";
             this.hideElement(checkCallButton);
             this.hideElement(raiseButton);
             this.hideElement(foldButton);
+            if(autoPlayOn){
+                triggerButton(tradeButton)
+            }
         } else {
             this.hideElement(tradeButton);
             this.showElement(checkCallButton);
@@ -264,21 +307,34 @@ const view = {
                 raiseButton.innerHTML =
                     betting.currentBet > 0 ? "RAISE" : "BET";
             }
+            if(autoPlayOn){
+                triggerButton(checkCallButton)
+            }
         }
     },
     positionDealerButton: function () {
+        if(!game.dealer)return;
         console.log("positionDealerButton()");
         console.log("dealer:", game.dealer);
         const dealerSeatEl = game.dealer.seat.element;
-        const x = dealerSeatEl.querySelector(".player-name").offsetLeft + 0; //dealerSeatEl.offsetWidth;
-        const y =
-            dealerSeatEl.querySelector(".player-name").offsetTop -
-            dealerButtonElement.offsetHeight; //dealerSeatEl.offsetHeight * 0.5;
+        console.log("dealerSeatEl:", dealerSeatEl);
+        console.log("name El: ", dealerSeatEl.querySelector(".player-name"));
+        var offsetBB = dealerSeatEl.getBoundingClientRect();
+        // these are relative to the viewport, i.e. the window
+        const y = offsetBB.top + window.scrollY - dealerButtonElement.offsetHeight;;
+        const x = offsetBB.left + window.scrollX;
+        // const x = dealerSeatEl.querySelector(".player-name").offsetLeft + 0; //dealerSeatEl.offsetWidth;
+        // const y =
+        //     dealerSeatEl.querySelector(".player-name").offsetTop -
+        //     dealerButtonElement.offsetHeight; //dealerSeatEl.offsetHeight * 0.5;
         console.log("x:", x);
         console.log("y:", y);
         dealerButtonElement.style.left = x + "px";
         dealerButtonElement.style.top = y + "px";
         // console.log("view:postionDealerButton()", x, y);
+    },
+    showActivePlayer: function (player) {
+        player.hand.element.classList.add("active-player");
     },
 };
 

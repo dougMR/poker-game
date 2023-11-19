@@ -1,4 +1,3 @@
-
 import { players } from "./config.js";
 // import { emitPlayers } from "./server.js";
 import { Player } from "./class-player.js";
@@ -31,9 +30,9 @@ const addPlayer = (name, id) => {
 };
 
 const removePlayerById = (id) => {
-    console.log('removePlayer()',id);
-    const playerIndex = players.indexOf(p => p.id === id);
-    players.splice(playerIndex,1);
-}
+    console.log("removePlayer()", id, players.find((p) => p.id === id)?.name);
+    const playerIndex = players.findIndex((p) => p.id === id);
+    players.splice(playerIndex, 1);
+};
 
-export { addPlayer,removePlayerById };
+export { addPlayer, removePlayerById };

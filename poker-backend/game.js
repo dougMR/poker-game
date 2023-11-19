@@ -1,7 +1,7 @@
 // import { view } from "./view.js";
 import { betting } from "./betting.js";
 import { compareHands } from "./check-hands.js";
-import { emitPlayers, emitGame, output } from "./server.js";
+import { emitPlayers, emitBetting, emitGame, emitGameOver, output } from "./server.js";
 import { getNextOccupiedSeat } from "./seats.js";
 import { players, rebuildDeck } from "./config.js";
 console.log("hello from game.js");
@@ -14,7 +14,7 @@ const game = {
     phaseIndex: 0,
     currentPhase: null,
     dealer: players[0],
-    winningPlayers: [],
+    // winningPlayers: [],
     getClientVersion: function () {
         console.log("game.getClientVersion()");
         return {
@@ -22,9 +22,8 @@ const game = {
             phaseIndex: game.phaseIndex,
             currentPhase: game.currentPhase,
             isDrawPhase: game.isDrawPhase(),
-            dealerIndex: players.findIndex((p) => p.id === game.dealer?.id),
-            // dealer: game.dealer?.clientVersion || null,
-            winnerIds: game.winningPlayers.map((p) => p.id),
+            // dealerIndex: players.findIndex((p) => p.id === game.dealer?.id),
+            dealerId: game.dealer?.id,
         };
     },
     getCurrentGame: function () {
@@ -36,50 +35,56 @@ const game = {
         return gameTypes[this.type];
     },
     nextDealer: function () {
+        const wasDealer = this.dealer;
         if (!this.dealer) {
             this.dealer = players[0];
         } else {
             let dealerSeatIndex = this.dealer.seat.index;
             this.dealer = getNextOccupiedSeat(dealerSeatIndex).player;
         }
-        console.log("game.nextDealer()", this.dealer?.name);
+        console.log("game.nextDealer()",wasDealer?.name,'-->', this.dealer?.name);
         // view.positionDealerButton();
     },
     getPlayersInHand: function () {
-        console.log("game.getPlayersInHand()", players.length);
+        console.log(
+            "game.getPlayersInHand()",
+            players.filter((p) => p.inHand).length
+        );
         return players.filter((p) => p.inHand);
     },
     startGame: function (gameType) {
         // Starts hand
-        console.log("game.startGame()", gameType);
+        console.log("\n\ngame.startGame()", gameType);
         betting.clearStates();
-        this.winningPlayers = [];
-        this.dealer = null;
+        // this.winningPlayers = [];
+        // this.dealer = null;
         rebuildDeck();
         for (const p of players) {
             p.inHand = true;
             p.hand.clearHand();
+            p.isWinner = false;
+            p.hand.hideHandName();
         }
         this.nextDealer();
         this.type = gameType || "7 Card Stud";
         this.phaseIndex = 0;
         this.startPhase();
     },
-    checkWild: function (card) {
+    checkWild: function (cardString) {
         console.log("game.checkWild()");
         // Is this card wild in the current game?
         // return true or false
         const wildCards = this.getCurrentGame().wildCards;
         if (!wildCards) return false;
         for (const wc of wildCards) {
-            if (wc[0] === card.string[0]) {
+            if (wc[0] === cardString[0]) {
                 // face (number) matches
                 if (wc[1] === "*") {
                     // any suit
                     return true;
                 } else {
                     // specific suit
-                    if (wc[1] === card.string[1]) {
+                    if (wc[1] === cardString[1]) {
                         return true;
                     }
                 }
@@ -113,7 +118,7 @@ const game = {
         const currentPhase = this.currentPhase;
         console.log("Phase: ", currentPhase.type);
         // Display Game and Phase
-        output(game.type + "<br />Phase: " + currentPhase.type.toUpperCase());
+        output(game.type + "<br />" + currentPhase.type.toUpperCase() + " round");
         const wilds = this.getCurrentGame().wildCards;
         if (wilds) {
             // Display list of Wilds
@@ -127,8 +132,11 @@ const game = {
             output(wildString, true);
         }
         // view.hideBetControls();
-
+        betting.clearHasPlayed();
+        emitGame();
+        //
         // Handle Phase type
+        //
         if (currentPhase.type === "ante") {
             // betting round where options are Call (ante amount) or Fold
             betting.startAnte(currentPhase.amount);
@@ -141,11 +149,15 @@ const game = {
         } else if (currentPhase.type === "bet") {
             // step through each player in order, starting with left of the dealer
             // betting.resetBet();
-            betting.nextBettor(game.dealer);
+            // Start w/ bettor after dealer
+            betting.currentBettor = null;
+            betting.nextBettor();
         } else if (currentPhase.type === "draw") {
             // discard and draw from deck
             // betting.resetBet();
-            // betting.nextBettor();
+            // Start w/ bettor after dealer
+            betting.currentBettor = null;
+            betting.nextBettor();
         } else if (currentPhase.type === "turn-cards") {
             // each player turn up cards until their hand is highest.
             // then bet, starting with that player
@@ -157,9 +169,9 @@ const game = {
             //
         } else if (currentPhase.type === "showdown") {
             // find winner
+            betting.clearActivePlayer();
             game.showdown();
         }
-        emitGame();
     },
     isDrawPhase: function () {
         // Is this a Phase where we draw/trade cards?
@@ -226,7 +238,7 @@ const game = {
                     } else if (result === 0) {
                         winningPlayers.push(player);
                     }
-
+                    // Show all hands
                     player.hand.arrangeByBest();
                     player.hand.showHand();
                     player.hand.showHandName();
@@ -248,26 +260,30 @@ const game = {
                 winningPlayers[0].hand.name;
         }
         let names = "";
-        const pluralPlayers = winningPlayers.length > 0 ? "" : "S";
-        console.log('  --- winningPlayers:',winningPlayers.length);
+        
+        console.log("  --- winningPlayers:", winningPlayers.length);
         for (const wp of winningPlayers) {
-            wp.hand.showHandWon();
-            names +=
-                wp.name + winningPlayers.length > 1 &&
-                wp !== winningPlayers.slice(-1)[0]
-                    ? ", "
-                    : "";
+            // wp.hand.showHandWon();
+            wp.isWinner = true;
+            console.log('wp:',wp.name);
+            names += `${wp.name}${
+                // Award winner.  Handle tie/s
+                winningPlayers.length > 1 && wp !== winningPlayers.slice(-1)[0] ? ", " : "" }`;
             betting.payFromPot(
                 wp,
                 Math.floor(betting.pot / winningPlayers.length)
             );
         }
-        this.winningPlayers = winningPlayers;
+        const pluralPlayers = winningPlayers.length > 1 ? "" : "S";
+        console.log('pluralPlayers:',winningPlayers.length);
+        // this.winningPlayers = winningPlayers;
         output(
-            `${names}WIN${pluralPlayers} <br />* * *<br />${winningCircumstance}`
+            `${names} WIN${pluralPlayers} <br />* * *<br />${winningCircumstance}`
         );
         console.log("done showdown.");
-        // Award winner.  Handle tie/s
+        emitGameOver();
+        emitBetting();
+        emitPlayers();
     },
 };
 

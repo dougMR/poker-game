@@ -21,6 +21,7 @@ class Player {
         this._hand = null;
         this._inHand = true;
         this._hasPlayedThisHand = false;
+        this._isActivePlayer = false;
         this.addToStack = (amount) => {
             if (
                 amount &&
@@ -93,6 +94,13 @@ class Player {
         }
     }
 
+    get isActivePlayer () {
+        return this._isActivePlayer;
+    }
+    set isActivePlayer (value) {
+        this._isActivePlayer = value;
+    }
+
     get clientVersion() {
         
         const playerObject = {
@@ -100,6 +108,8 @@ class Player {
             id: this.id,
             stack: this.stack,
             inHand: this.inHand,
+            isWinner: this.isWinner,
+            isActivePlayer: this.isActivePlayer,
             hand: this.hand.clientVersion,
             seat: { index: this.seat.index },
         };

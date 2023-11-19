@@ -21,5 +21,3 @@ const folders = [{id: 1, name: "folder 1"}]
 const files = [{id:1, folderID:1, name: "file 1"}, {id:1, folderID:null, name: "file 1"}]
 
 console.log("tree ran")
-
-

@@ -31,6 +31,7 @@ class Hand {
         this._handString = "";
         this._wildsArray = [];
         this._handDetails = {};
+        this._showingHandName = false;
         // this._bestHand = [];
         // this._deck = deck;
         //
@@ -45,7 +46,10 @@ class Hand {
             }
         };
         this.showHandName = () => {
-            // view.showHandName(this);
+            this._showingHandName = true;
+        };
+        this.hideHandName = () => {
+            this._showingHandName = false;
         };
         this.hideCard = (index) => {
             // target card element
@@ -55,9 +59,9 @@ class Hand {
             // target card element
             this._cards[index].show();
         };
-        this.showHandWon = () => {
-            this.hilightBestHand();
-        };
+        // this.showHandWon = () => {
+        //     this.hilightBestHand();
+        // };
         this.hideHandWon = () => {
             // view.hideHandWon(this);
         };
@@ -141,32 +145,32 @@ class Hand {
             this._cards.push(...newOrder, ...cardsDupe);
             this.refreshCardElements();
         };
-        this.hilightBestHand = () => {
-            console.log('Hand.hilightBestHand()');
-            // console.log("this.bestHand", this.bestHand);
-            // console.log("this.cards:", this.cards);
-            let handWilds = this.bestHand.filter((c) => c[1] === "*").length;
-            // console.log("handWIlds:", handWilds);
-            let cNum = this.cards.length;
-            while (cNum--) {
-                const c = this.cards[cNum];
-                // console.log("c:", c);
-                // console.log(
-                //     "this.bestHand.includes(c.name):",
-                //     this.bestHand.includes(c.name)
-                // );
-                // console.log("c.isWild :", c.isWild);
-                // console.log("handWilds > 0", handWilds > 0);
-                if (
-                    this.bestHand.includes(c.name) ||
-                    (c.isWild && handWilds > 0)
-                ) {
-                    // console.log("Hilight", c);
-                    // view.hilightCard(c);
-                    if (c.isWild) handWilds--;
-                }
-            }
-        };
+        // this.hilightBestHand = () => {
+        //     console.log('Hand.hilightBestHand()');
+        //     // console.log("this.bestHand", this.bestHand);
+        //     // console.log("this.cards:", this.cards);
+        //     let handWilds = this.bestHand.filter((c) => c[1] === "*").length;
+        //     // console.log("handWIlds:", handWilds);
+        //     let cNum = this.cards.length;
+        //     while (cNum--) {
+        //         const c = this.cards[cNum];
+        //         // console.log("c:", c);
+        //         // console.log(
+        //         //     "this.bestHand.includes(c.name):",
+        //         //     this.bestHand.includes(c.name)
+        //         // );
+        //         // console.log("c.isWild :", c.isWild);
+        //         // console.log("handWilds > 0", handWilds > 0);
+        //         if (
+        //             this.bestHand.includes(c.name) ||
+        //             (c.isWild && handWilds > 0)
+        //         ) {
+        //             // console.log("Hilight", c);
+        //             // view.hilightCard(c);
+        //             if (c.isWild) handWilds--;
+        //         }
+        //     }
+        // };
         this.updateProperties = () => {
             console.log("Hand.updateProperties()");
             // when we update the hand (change any cards)
@@ -208,6 +212,13 @@ class Hand {
     get name() {
         // name of hand eg. "two pair"
         return this._handDetails.name;
+    }
+
+    get showingHandName () {
+        return this._showingHandName;
+    }
+    set showingHandName (value) {
+        this._showingHandName = value;
     }
 
     get bestHand() {
@@ -254,7 +265,8 @@ class Hand {
             name: this.name,
             bestHand: this.bestHand,
             cards: this.cards.map((c) => c.clientVersion),
-            playerId: this.player.id
+            playerId: this.player.id,
+            showingHandName: this.showingHandName
         }
         // for(const card of handObject.cards){
         //     card.hand = handObject;

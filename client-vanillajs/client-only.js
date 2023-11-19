@@ -1,6 +1,7 @@
 import { clientPlayer, betting, bet, game } from "./main.js";
 // import { betting, bet } from "./betting.js";
 import { view } from "./view.js";
+import { showPrompt } from "./prompt.js";
 // import { game } from "./game.js";
 
 // This and dev-tools.js and view.js are all client-side code
@@ -17,7 +18,12 @@ const tradeButton = betControls.querySelector(".trade");
 
 betButton.addEventListener("pointerdown", (event) => {
     // Submit Bet
-    bet("bet", Number(betSpan.innerHTML));
+    const betAmount = Number(betSpan.innerHTML);
+    if (betAmount >= betting.minBet) {
+        bet("bet", betAmount);
+    } else {
+        alert("You must at least call the current bet of " + betting.minBet);
+    }
 });
 
 const addToBet = (amount) => {
@@ -54,10 +60,15 @@ checkCallButton.addEventListener("pointerdown", (event) => {
     const label = event.currentTarget.innerHTML;
     if (label === "CALL") {
         // betting.call();
-        if (confirm("Call $" + betting.minBet + "?")) {
-            console.log("calling...");
-            bet("bet", betting.minBet);
-        }
+        showPrompt("Call $" + betting.minBet + "?", () => {
+            {
+                console.log("calling...");
+                bet("bet", betting.minBet);
+            }
+        });
+        // console.log('callit:',callit);
+        // if (confirm("Call $" + betting.minBet + "?")) {
+
         // bet("call");
     } else if (label === "CHECK") {
         // betting.check();
@@ -68,6 +79,7 @@ raiseButton.addEventListener("pointerdown", (event) => {
     // are we in bettnig phase?
     // Set the bet
     view.showElement(raiseControls);
+    view.hideElement(raiseButton);
     // set starting amount
     addToBet(betting.currentBet - clientPlayer.amountBetThisRound);
 });
@@ -79,6 +91,7 @@ foldButton.addEventListener("pointerdown", (event) => {
 });
 
 tradeButton.addEventListener("pointerdown", (event) => {
+    console.log("trade button pressed");
     switch (game.currentPhase.type) {
         case "draw":
             // clientPlayer.hand.tradeCards();

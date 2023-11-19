@@ -93,7 +93,7 @@ const emitBetting = () => {
     console.log("emitBetting()");
     const bettingForClient = {
         pot: betting.pot,
-        currentBettor: betting.currentBettor.clientVersion,
+        currentBettor: betting.currentBettor?.clientVersion,
         inAnteRound: betting.inAnteRound,
         minBet: betting.getMinBet(),
     };
@@ -107,6 +107,10 @@ const emitBetting = () => {
     //     bettingForClient.currentBettor.id
     // );
     io.emit("updateBetting", bettingForClient);
+};
+
+const emitGameOver = () => {
+    io.emit("endHand");
 };
 
 const output = (message, add) => {
@@ -128,7 +132,7 @@ io.on("connection", (socket) => {
         const result = addPlayer(playerName, socket.id);
         if (result?.success) {
             emitPlayers();
-            emitGame();
+            // emitGame();
         }
         callback(result);
         socket.emit("output", "Hello, " + playerName);
@@ -138,12 +142,16 @@ io.on("connection", (socket) => {
     socket.on("start_game", (gameType) => {
         console.log("start_game", gameType);
         game.startGame(gameType);
-        // emitGame();
-        // emitPlayers();
     });
 
     socket.on("bettor_action", (action, amount) => {
-        console.log("bettor_action", action, amount);
+        console.log(
+            "> bettor_action -->  (" +
+                players.find((p) => p.id === socket.id).name +
+                ")",
+            action,
+            amount
+        );
         switch (action) {
             case "bet":
                 betting.bet(amount);
@@ -171,6 +179,7 @@ io.on("connection", (socket) => {
             default:
             // check?
         }
+        emitPlayers();
     });
 
     socket.on("update_card", (playerId, clientCard) => {
@@ -226,6 +235,7 @@ io.on("connection", (socket) => {
         socket.emit("message", `disconnected from player ID ${socket.id}`);
         clearSeat(socket.id);
         removePlayerById(socket.id);
+        console.log("players:", players);
         emitPlayers();
         // io.emit("updatePlayers", players);
     });
@@ -250,4 +260,4 @@ server.listen(3011, () => {
     console.log("server running!  It Lives!");
 });
 
-export { emitPlayers, emitGame, emitBetting, output };
+export { emitPlayers, emitGame, emitBetting, output, emitGameOver };

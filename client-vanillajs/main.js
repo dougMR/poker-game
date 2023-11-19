@@ -3,30 +3,29 @@ import serverURL from "./server-url.js";
 // import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 
 // import { players, clientPlayer, setClientPlayer } from "./players.js";
-
+import { showPrompt } from "./prompt.js";
 import { assignSeats, clearSeats } from "./seats.js";
 import { view } from "./view.js";
 import "./dev-tools.js";
 import "./client-only.js";
 
-//////////////////////////
-// Modal Prompts Stuff
-//////////////////////////
 
+
+//////////////////////////
+// Name Prompt Stuff
+//////////////////////////
 const showNamePrompt = () => {
-    console.log("showPrompt()");
-    namePrompt.classList.remove("hidden");
+    const nameEntered = showPrompt("Please enter your player name", handleNameEntered, true);
+    console.log('nameEntered: ',nameEntered);
 };
 
-const handleNameEntered = (name) => {
+const handleNameEntered = (pName) => {
+    console.log('handleNameENtered()',pName);
     // Join the Game
-    const pName = namePrompt.querySelector("input").value;
+    // const pName = promptDialog.querySelector("input").value;
     if (pName && pName.length < 20) {
         connectToServer();
         joinGame(pName);
-        // Close Name Prompt
-        namePrompt.classList.add("hidden");
-        console.log("namePrompt:", namePrompt);
     }
 };
 
@@ -64,6 +63,7 @@ const updatePlayers = (backendPlayers) => {
         (p) => p.id === socket.id
     );
     // update seat elements
+    clearSeats();
     assignSeats(backendPlayers, clientPlayerIndex);
     // Update View
     for (const p of backendPlayers) {
@@ -88,13 +88,23 @@ const updatePlayers = (backendPlayers) => {
             // view.dimCard(c);
             // view.hilightCard(c);
         }
+        if (p.isWinner) {
+            view.hilightBestHand(p);
+        }
         view.refreshCards(p);
         // console.log("player...", p);
         // seats[p.seat.index].player = p;
+        if (p.hand.showingHandName) {
+            view.showHandName(p);
+        } 
+        // console.log("IS ACTIVE PLAYER? ", p.name, p.isActivePlayer);
+        if (p.isActivePlayer) {
+            view.showActivePlayer(p);
+        }
     }
     setPlayers(backendPlayers);
-
     clientPlayer = players[clientPlayerIndex];
+    // showWinners();
 };
 
 //////////////////////////
@@ -104,11 +114,11 @@ const updatePlayers = (backendPlayers) => {
 const updateGame = (backendGame) => {
     game = backendGame;
     console.log("updateGame:");
-    // console.log("dealerIndex:", game.dealerIndex);
+    console.log("game:", backendGame);
     game.dealer = null;
-    if (game.dealerIndex !== -1) {
+    if (game.dealerId) {
         // set dealer
-        game.dealer = players[game.dealerIndex];
+        game.dealer = players.find((p) => p.id === game.dealerId);
         view.positionDealerButton();
     }
     /*
@@ -116,12 +126,38 @@ const updateGame = (backendGame) => {
         type: game.type,
         phaseIndex: game.phaseIndex,
         currentPhase: game.currentPhase,
-        dealerIndex: players.indexOf((p) => p.id === game.dealer.id),
+        dealerId: players.indexOf((p) => p.id === game.dealer.id),
         // isDrawPhase:boolean,
         winnerIds: game.winningPlayers.map((p) => p.id),
     }
     */
+    console.log("(updateGame) game.currentPhase.type:", game.currentPhase.type);
+    console.log(
+        "betting.currentBettor.id:",
+        betting?.currentBettor?.id,
+        "vs",
+        "socket.id",
+        socket.id
+    );
+
+    if (
+        game.currentPhase.type !== "showdown" &&
+        betting?.currentBettor?.id === socket.id
+    ) {
+        // I am active player
+        view.showBetControls();
+    } else {
+        view.hideBetControls();
+    }
 };
+
+// const showWinners = () => {
+//     const winners = players.filter((p) => p.isWinner);
+//     for (const player of winners) {
+//         console.log("hilight", player.name);
+//         view.hilightBestHand(player);
+//     }
+// };
 
 ////////////////////////
 // Card Stuff
@@ -155,7 +191,7 @@ const updateBetting = (backendBetting) => {
     // );
     console.log(
         "I'm currentBettor:",
-        backendBetting.currentBettor.id === socket.id
+        backendBetting.currentBettor?.id === socket.id
     );
     // console.log(
     //     "backendBetting.currentBettor.id",
@@ -163,7 +199,22 @@ const updateBetting = (backendBetting) => {
     //     backendBetting.currentBettor.id,
     //     socket.id
     // );
-    if (backendBetting.currentBettor.id === socket.id) {
+    // console.log('(updateBetting) game:',game);
+    // console.log(
+    //     "(updateBetting) game.currentPhase.type:",
+    //     game.currentPhase.type
+    // );
+    console.log(
+        "betting.currentBettor.id:",
+        betting.currentBettor?.id,
+        "vs",
+        "socket.id",
+        socket.id
+    );
+    if (
+        game?.currentPhase?.type !== "showdown" &&
+        betting.currentBettor?.id === socket.id
+    ) {
         // I am active player
         view.showBetControls();
     } else {
@@ -172,7 +223,7 @@ const updateBetting = (backendBetting) => {
 };
 
 const bet = (action, amount) => {
-    console.log("bet()", action);
+    console.log("bet()", action.toUpperCase());
     // call, check, bet(amount),raise(amount),fold(), draw
     amount = amount || 0;
     socket.emit("bettor_action", action, amount);
@@ -217,8 +268,8 @@ const connectToServer = () => {
             console.log("DISCONNECTED.");
             console.log("BECAUSE:", data);
             // Reset Game Interface
-            clearSeats();
-            resetGameStates()
+            // clearSeats();
+            resetGameStates();
             updatePlayers(players);
             view.hideBetControls();
             // view.removeSeats();
@@ -241,34 +292,59 @@ const connectToServer = () => {
             // console.log("output", message);
             view.output(message, add);
         });
+
+        socket.on("endHand", () => {
+            console.log("\n\nendHand");
+            view.hideBetControls();
+            // autoPlayOn = false;
+        });
     });
 };
 
-const socketFunctions = {
-    startGame: () => {
-        console.log("call start_game", "5 Card Draw");
-        socket.emit("start_game", "5 Card Draw");
-    },
+const startGame = () => {
+    console.log("call start_game", "5 Card Draw");
+    // autoPlayOn = true;
+    socket.emit("start_game", "5 Card Draw");
 };
 
 const resetGameStates = () => {
+    console.log("resetGameStates()");
+    // winnerIds = [];
     players = [];
     game = null;
     betting = null;
     clientPlayer = null;
 };
 
+// let winnerIds = [];
+let autoPlayOn = false;
 let socket = null;
 let players = [];
 let game = null;
 let betting = null;
 let clientPlayer = null;
 
-const namePrompt = document.getElementById("name-prompt");
-namePrompt
-    .querySelector("button")
-    .addEventListener("pointerdown", handleNameEntered);
+// const namePrompt = document.getElementById("name-prompt");
+// namePrompt
+//     .querySelector("button")
+//     .addEventListener("pointerdown", handleNameEntered);
+
+// 
+// Point of Entry
+// 
+
 view.hideBetControls();
 showNamePrompt();
 
-export { clientPlayer, players, socketFunctions, game, betting, bet, emitCard };
+
+export {
+    clientPlayer,
+    players,
+    startGame,
+    game,
+    betting,
+    bet,
+    emitCard,
+    showNamePrompt,
+    autoPlayOn,
+};
